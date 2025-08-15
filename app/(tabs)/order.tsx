@@ -411,6 +411,22 @@ export default function OrderScreen() {
         </View>
       )}
 
+      {/* 支払い用固定フッター */}
+      {confirmedOrders.length > 0 && (
+        <View style={styles.paymentFooter}>
+          <View style={styles.paymentInfo}>
+            <Text style={styles.paymentTableText}>テーブル {tableNumber}</Text>
+            <Text style={styles.paymentTotalText}>合計: ¥{getTotalAmount().toLocaleString()}</Text>
+          </View>
+          <TouchableOpacity
+            style={styles.paymentButton}
+            onPress={() => router.push(`/payment?tableId=${currentTableId}&tableNumber=${tableNumber}`)}
+          >
+            <Text style={styles.paymentButtonText}>支払い</Text>
+          </TouchableOpacity>
+        </View>
+      )}
+
       {/* テーブル選択モーダル */}
       <Modal
         visible={showTableSelector}
@@ -478,8 +494,8 @@ const styles = StyleSheet.create({
   },
   header: {
     backgroundColor: '#8B4513',
-    paddingTop: 50,
-    paddingBottom: 20,
+    paddingTop: 40,
+    paddingBottom: 15,
     paddingHorizontal: 20,
     flexDirection: 'row',
     alignItems: 'center',
@@ -788,5 +804,42 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontWeight: 'bold',
     textAlign: 'center',
+  },
+  paymentFooter: {
+    backgroundColor: '#FFFFFF',
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingVertical: 15,
+    borderTopWidth: 1,
+    borderTopColor: '#E0E0E0',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: -2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 5,
+  },
+  paymentInfo: {
+    flex: 1,
+  },
+  paymentTableText: {
+    fontSize: 14,
+    color: '#666666',
+  },
+  paymentTotalText: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#8B4513',
+  },
+  paymentButton: {
+    backgroundColor: '#8B4513',
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 8,
+  },
+  paymentButtonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: 'bold',
   },
 });
