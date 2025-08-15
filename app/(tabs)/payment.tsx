@@ -7,7 +7,7 @@ import {
   TouchableOpacity,
   Alert,
 } from 'react-native';
-import { ArrowLeft, CreditCard, Receipt, CheckCircle } from 'lucide-react-native';
+import { ArrowLeft, CreditCard, Receipt, CircleCheck as CheckCircle } from 'lucide-react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useDatabase } from '@/hooks/useDatabase';
 
