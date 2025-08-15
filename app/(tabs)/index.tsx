@@ -769,7 +769,10 @@ export default function TablesScreen() {
               {/* PC用の設定ボタンを追加 */}
               <TouchableOpacity
                 style={styles.tableSettingsButton}
-                onPress={() => handleTableLongPress(table)}
+                onPress={(e) => {
+                  e.stopPropagation();
+                  handleTableLongPress(table);
+                }}
                 hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
               >
                 <Edit size={16} color="#8B4513" />
