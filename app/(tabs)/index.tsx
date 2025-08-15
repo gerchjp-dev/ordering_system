@@ -155,33 +155,11 @@ export default function TablesScreen() {
 
   const handleTablePress = (table: Table) => {
     if (table.status === 'available' || table.status === 'reserved') {
-      // 空席・予約済みの場合はメニュー選択画面に遷移
-      router.push(`/menu?tableId=${table.id}&tableNumber=${table.number}&mode=order`);
+      // 空席・予約済みの場合は注文画面に遷移
+      router.push(`/order?tableId=${table.id}&tableNumber=${table.number}`);
     } else if (table.status === 'occupied') {
-      // 使用中の場合は選択肢を表示
-      const orderDetails = table.orders.length > 0 ? 
-        `\n\n注文内容:\n${table.orders.map(item => `・${item.name} × ${item.quantity} = ¥${(item.price * item.quantity).toLocaleString()}`).join('\n')}` : 
-        '\n\n注文内容: なし';
-      
-      Alert.alert(
-        `テーブル ${table.number}`,
-        `現在の注文: ${table.orders.length}件\n合計金額: ¥${table.totalAmount.toLocaleString()}${orderDetails}\n\n何をしますか？`,
-        [
-          { text: 'キャンセル', style: 'cancel' },
-          {
-            text: '追加注文',
-            onPress: () => router.push(`/menu?tableId=${table.id}&tableNumber=${table.number}&mode=additional`),
-          },
-          {
-            text: 'メニュー管理',
-            onPress: () => router.push('/menu'),
-          },
-          {
-            text: '支払い・退席',
-            onPress: () => finishOrder(table.id),
-          },
-        ]
-      );
+      // 使用中の場合も注文画面に遷移（既存の注文が表示される）
+      router.push(`/order?tableId=${table.id}&tableNumber=${table.number}`);
     } else if (table.status === 'cleaning') {
       Alert.alert(
         `テーブル ${table.number}`,
