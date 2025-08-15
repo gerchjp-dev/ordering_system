@@ -6,6 +6,8 @@ import {
   ScrollView,
   TouchableOpacity,
   Image,
+  Modal,
+  TextInput,
 } from 'react-native';
 import { Coffee, ArrowLeft, ShoppingCart, Plus } from 'lucide-react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
