@@ -9,7 +9,7 @@ import {
   Modal,
   TextInput,
 } from 'react-native';
-import { Plus, Users, Clock, CircleCheck as CheckCircle, Circle as XCircle, CreditCard as Edit, Trash2 } from 'lucide-react-native';
+import { Plus, Users, Clock, CircleCheck as CheckCircle, Circle as XCircle, CreditCard as Edit, Trash2, Menu, UtensilsCrossed, ClipboardList, TrendingUp, X } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import { useDatabase } from '@/hooks/useDatabase';
 import { Table as DBTable } from '@/lib/database';
@@ -60,6 +60,7 @@ export default function TablesScreen() {
   const [editingTable, setEditingTable] = useState<Table | null>(null);
   const [showEditModal, setShowEditModal] = useState(false);
   const [orderHistory, setOrderHistory] = useState<any[]>([]);
+  const [showHamburgerMenu, setShowHamburgerMenu] = useState(false);
   const router = useRouter();
 
   // データベース接続状態の確認
@@ -673,12 +674,20 @@ export default function TablesScreen() {
             {isUsingMockData ? 'モック' : 'リアル'}データ
           </Text>
         </View>
-        <TouchableOpacity
-          style={styles.addButton}
-          onPress={() => setShowAddModal(true)}
-        >
-          <Plus size={24} color="#FFFFFF" />
-        </TouchableOpacity>
+        <View style={styles.headerActions}>
+          <TouchableOpacity
+            style={styles.addButton}
+            onPress={() => setShowAddModal(true)}
+          >
+            <Plus size={24} color="#FFFFFF" />
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.hamburgerButton}
+            onPress={() => setShowHamburgerMenu(true)}
+          >
+            <Menu size={24} color="#FFFFFF" />
+          </TouchableOpacity>
+        </View>
       </View>
 
       <View style={styles.statsContainer}>
@@ -828,6 +837,63 @@ export default function TablesScreen() {
           </View>
         </View>
       </Modal>
+
+      {/* ハンバーガーメニューモーダル */}
+      <Modal
+        visible={showHamburgerMenu}
+        transparent={true}
+        animationType="slide"
+        onRequestClose={() => setShowHamburgerMenu(false)}
+      >
+        <View style={styles.hamburgerOverlay}>
+          <View style={styles.hamburgerContent}>
+            <View style={styles.hamburgerHeader}>
+              <Text style={styles.hamburgerTitle}>メニュー</Text>
+              <TouchableOpacity
+                style={styles.hamburgerCloseButton}
+                onPress={() => setShowHamburgerMenu(false)}
+              >
+                <X size={24} color="#8B4513" />
+              </TouchableOpacity>
+            </View>
+            
+            <View style={styles.hamburgerItems}>
+              <TouchableOpacity
+                style={styles.hamburgerItem}
+                onPress={() => {
+                  setShowHamburgerMenu(false);
+                  router.push('/menu');
+                }}
+              >
+                <UtensilsCrossed size={24} color="#8B4513" />
+                <Text style={styles.hamburgerItemText}>メニュー管理</Text>
+              </TouchableOpacity>
+              
+              <TouchableOpacity
+                style={styles.hamburgerItem}
+                onPress={() => {
+                  setShowHamburgerMenu(false);
+                  router.push('/order-history');
+                }}
+              >
+                <ClipboardList size={24} color="#8B4513" />
+                <Text style={styles.hamburgerItemText}>注文履歴</Text>
+              </TouchableOpacity>
+              
+              <TouchableOpacity
+                style={styles.hamburgerItem}
+                onPress={() => {
+                  setShowHamburgerMenu(false);
+                  router.push('/analytics');
+                }}
+              >
+                <TrendingUp size={24} color="#8B4513" />
+                <Text style={styles.hamburgerItemText}>売上分析</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -863,7 +929,20 @@ const styles = StyleSheet.create({
     fontSize: 10,
     color: 'rgba(255, 255, 255, 0.8)',
   },
+  headerActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
   addButton: {
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  hamburgerButton: {
     backgroundColor: 'rgba(255, 255, 255, 0.2)',
     width: 40,
     height: 40,
@@ -1018,5 +1097,61 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontWeight: 'bold',
     textAlign: 'center',
+  },
+  hamburgerOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'flex-start',
+    alignItems: 'flex-end',
+  },
+  hamburgerContent: {
+    backgroundColor: '#FFFFFF',
+    width: 280,
+    height: '100%',
+    paddingTop: 40,
+    shadowColor: '#000',
+    shadowOffset: { width: -2, height: 0 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 10,
+  },
+  hamburgerHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingBottom: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E0E0E0',
+  },
+  hamburgerTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#8B4513',
+  },
+  hamburgerCloseButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#F5E6D3',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  hamburgerItems: {
+    paddingTop: 20,
+  },
+  hamburgerItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F0F0F0',
+  },
+  hamburgerItemText: {
+    fontSize: 18,
+    color: '#333333',
+    marginLeft: 16,
+    fontWeight: '500',
   },
 });
