@@ -9,7 +9,7 @@ import {
   Alert,
   Modal,
 } from 'react-native';
-import { Plus, Minus, ArrowLeft, ChevronDown, CheckCircle, Clock } from 'lucide-react-native';
+import { Plus, Minus, ArrowLeft, ChevronDown, CircleCheck as CheckCircle, Clock } from 'lucide-react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useDatabase } from '@/hooks/useDatabase';
 
