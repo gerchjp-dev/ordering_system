@@ -945,6 +945,17 @@ export default function TablesScreen() {
                 <TrendingUp size={24} color="#8B4513" />
                 <Text style={styles.hamburgerItemText}>売上分析</Text>
               </TouchableOpacity>
+              
+              <TouchableOpacity
+                style={styles.hamburgerItem}
+                onPress={() => {
+                  setShowHamburgerMenu(false);
+                  router.push('/settings');
+                }}
+              >
+                <Settings size={24} color="#8B4513" />
+                <Text style={styles.hamburgerItemText}>設定</Text>
+              </TouchableOpacity>
             </View>
           </View>
         </View>
