@@ -191,6 +191,10 @@ export default function TablesScreen() {
             onPress: () => router.push('/order-history'),
           },
           {
+            text: '支払い画面',
+            onPress: () => router.push(`/payment?tableId=${table.id}&tableNumber=${table.number}`),
+          },
+          {
             text: 'テーブル名変更',
             onPress: () => {
               setEditingTable(table);
@@ -223,8 +227,8 @@ export default function TablesScreen() {
             onPress: () => router.push('/order-history'),
           },
           {
-            text: '支払い・退席',
-            onPress: () => finishOrder(table.id),
+            text: '支払い画面',
+            onPress: () => router.push(`/payment?tableId=${table.id}&tableNumber=${table.number}`),
           },
           {
             text: 'テーブル削除（強制）',
@@ -246,6 +250,10 @@ export default function TablesScreen() {
           {
             text: '注文履歴',
             onPress: () => router.push('/order-history'),
+          },
+          {
+            text: '支払い画面',
+            onPress: () => router.push(`/payment?tableId=${table.id}&tableNumber=${table.number}`),
           },
           {
             text: 'テーブル名変更',
@@ -278,6 +286,10 @@ export default function TablesScreen() {
           {
             text: '注文履歴',
             onPress: () => router.push('/order-history'),
+          },
+          {
+            text: '支払い画面',
+            onPress: () => router.push(`/payment?tableId=${table.id}&tableNumber=${table.number}`),
           },
           {
             text: '清掃完了',

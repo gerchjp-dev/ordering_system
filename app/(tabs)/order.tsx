@@ -9,7 +9,7 @@ import {
   Alert,
   Modal,
 } from 'react-native';
-import { Plus, Minus, CreditCard, ArrowLeft, ChevronDown } from 'lucide-react-native';
+import { Plus, Minus, ArrowLeft, ChevronDown, CheckCircle, Clock } from 'lucide-react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useDatabase } from '@/hooks/useDatabase';
 
@@ -93,7 +93,8 @@ const menuItems: MenuItem[] = [
 
 export default function OrderScreen() {
   const { database, isConnected } = useDatabase();
-  const [cart, setCart] = useState<CartItem[]>([]);
+  const [confirmedOrders, setConfirmedOrders] = useState<CartItem[]>([]); // 確定済み注文
+  const [pendingOrders, setPendingOrders] = useState<CartItem[]>([]); // 追加注文（未確定）
   const [showTableSelector, setShowTableSelector] = useState(false);
   const [availableTables, setAvailableTables] = useState<any[]>([]);
   const router = useRouter();
@@ -130,12 +131,12 @@ export default function OrderScreen() {
   // データベース接続時はDBのメニューを使用、そうでなければモックデータ
   const currentMenuItems = isConnected && dbMenuItems.length > 0 ? dbMenuItems : menuItems;
 
-  // テーブルの既存注文を読み込み
+  // テーブルの既存注文を読み込み（確定済み注文として表示）
   useEffect(() => {
     if (currentTableId && (global as any).getTableOrders) {
       const existingOrders = (global as any).getTableOrders(currentTableId);
-      if (existingOrders) {
-        setCart(existingOrders);
+      if (existingOrders && existingOrders.length > 0) {
+        setConfirmedOrders(existingOrders);
       }
     }
     
@@ -146,32 +147,24 @@ export default function OrderScreen() {
     }
   }, [currentTableId]);
 
-  // カートが変更されるたびにテーブルの注文を更新
-  useEffect(() => {
-    if (currentTableId && (global as any).updateTableOrder) {
-      const totalAmount = getTotalPrice();
-      (global as any).updateTableOrder(currentTableId, cart, totalAmount);
-    }
-  }, [cart, currentTableId]);
-
-  const addToCart = (item: MenuItem) => {
-    setCart(prevCart => {
-      const existingItem = prevCart.find(cartItem => cartItem.id === item.id);
+  const addToPendingOrders = (item: MenuItem) => {
+    setPendingOrders(prevOrders => {
+      const existingItem = prevOrders.find(order => order.id === item.id);
       if (existingItem) {
-        return prevCart.map(cartItem =>
-          cartItem.id === item.id
-            ? { ...cartItem, quantity: cartItem.quantity + 1 }
-            : cartItem
+        return prevOrders.map(order =>
+          order.id === item.id
+            ? { ...order, quantity: order.quantity + 1 }
+            : order
         );
       } else {
-        return [...prevCart, { ...item, quantity: 1 }];
+        return [...prevOrders, { ...item, quantity: 1 }];
       }
     });
   };
 
-  const removeFromCart = (id: string) => {
-    setCart(prevCart => {
-      return prevCart.reduce((acc, item) => {
+  const removeFromPendingOrders = (id: string) => {
+    setPendingOrders(prevOrders => {
+      return prevOrders.reduce((acc, item) => {
         if (item.id === id) {
           if (item.quantity > 1) {
             acc.push({ ...item, quantity: item.quantity - 1 });
@@ -184,89 +177,99 @@ export default function OrderScreen() {
     });
   };
 
-  const getTotalPrice = () => {
-    return cart.reduce((total, item) => total + item.price * item.quantity, 0);
+  const getPendingTotal = () => {
+    return pendingOrders.reduce((total, item) => total + item.price * item.quantity, 0);
   };
 
-  const processPayment = () => {
-    console.log('processPayment called');
-    console.log('Cart:', cart);
-    console.log('Current table ID:', currentTableId);
-    
-    if (cart.length === 0) {
-      Alert.alert('エラー', 'カートが空です');
+  const getConfirmedTotal = () => {
+    return confirmedOrders.reduce((total, item) => total + item.price * item.quantity, 0);
+  };
+
+  const getTotalAmount = () => {
+    return getConfirmedTotal() + getPendingTotal();
+  };
+
+  const confirmPendingOrders = () => {
+    if (pendingOrders.length === 0) {
+      Alert.alert('エラー', '追加する注文がありません');
       return;
     }
     
-    console.log('Showing payment confirmation');
     Alert.alert(
-      '支払い確認',
-      `テーブル: ${tableNumber}\n\n注文内容:\n${cart.map(item => `・${item.name} × ${item.quantity} = ¥${(item.price * item.quantity).toLocaleString()}`).join('\n')}\n\n合計金額: ¥${getTotalPrice().toLocaleString()}\n\n会計を完了しますか？`,
+      '注文確定',
+      `以下の注文を確定しますか？\n\n${pendingOrders.map(item => `・${item.name} × ${item.quantity} = ¥${(item.price * item.quantity).toLocaleString()}`).join('\n')}\n\n追加金額: ¥${getPendingTotal().toLocaleString()}`,
       [
         { text: 'キャンセル', style: 'cancel' },
         {
-          text: '支払い完了',
+          text: '確定',
           onPress: async () => {
-            console.log('Payment completion started');
-            
             try {
-              // 注文履歴データを準備
-              const orderData = {
-                id: Date.now().toString(),
-                tableNumber: tableNumber as string,
-                items: cart.map(item => ({
-                  name: item.name,
-                  quantity: item.quantity,
-                  price: item.price
-                })),
-                total: getTotalPrice(),
-                timestamp: new Date(),
-              };
+              console.log('📝 追加注文確定処理開始...');
               
-              // データベースに注文履歴を保存
+              // 確定済み注文に追加
+              const updatedConfirmedOrders = [...confirmedOrders];
+              
+              // 既存の注文と統合
+              pendingOrders.forEach(pendingItem => {
+                const existingIndex = updatedConfirmedOrders.findIndex(item => item.id === pendingItem.id);
+                if (existingIndex >= 0) {
+                  updatedConfirmedOrders[existingIndex].quantity += pendingItem.quantity;
+                } else {
+                  updatedConfirmedOrders.push(pendingItem);
+                }
+              });
+              
+              setConfirmedOrders(updatedConfirmedOrders);
+              
+              // データベースに注文を保存
               if (database && isConnected) {
-                console.log('💾 データベースに注文履歴を保存中...');
-                await database.createOrderHistory({
-                  table_number: tableNumber as string,
-                  items: orderData.items,
-                  total_amount: getTotalPrice(),
-                });
-                console.log('✅ 注文履歴保存完了');
+                console.log('💾 Supabaseに追加注文を保存中...');
+                for (const item of pendingOrders) {
+                  await database.createOrder({
+                    table_id: currentTableId,
+                    menu_item_id: item.id,
+                    quantity: item.quantity,
+                    unit_price: item.price,
+                  });
+                }
                 
-                // データベースからテーブルを削除
-                console.log('🗑️ データベースからテーブル削除中...');
-                await database.deleteTable(currentTableId);
-                console.log('✅ テーブル削除完了');
+                // テーブル状態を更新
+                await database.updateTable(currentTableId, {
+                  status: 'occupied',
+                  customer_count: 1,
+                  order_start_time: new Date().toISOString(),
+                  total_amount: getTotalAmount(),
+                });
+                console.log('✅ Supabase注文保存完了');
               } else {
                 console.log('⚠️ データベース未接続 - ローカル処理のみ');
               }
               
               // グローバル関数でローカル状態も更新
-              if ((global as any).completePayment) {
-                console.log('🔄 ローカル状態更新中...');
-                await (global as any).completePayment(currentTableId, orderData);
-                console.log('✅ ローカル状態更新完了');
+              if ((global as any).updateTableOrder) {
+                (global as any).updateTableOrder(currentTableId, updatedConfirmedOrders, getTotalAmount());
               }
               
-              console.log('Showing completion alert');
+              if ((global as any).updateTableStatus) {
+                (global as any).updateTableStatus(currentTableId, 'occupied', {
+                  orderStartTime: new Date(),
+                  customerCount: 1
+                });
+              }
+              
+              // 追加注文をクリア
+              setPendingOrders([]);
+              
               Alert.alert(
-                '支払い完了',
-                `🎉 テーブル ${tableNumber}の支払いが完了しました！\n\n💰 合計金額: ¥${getTotalPrice().toLocaleString()}\n📝 注文履歴に保存されました\n🗑️ テーブルが削除されました\n\n接続状態: ${isConnected ? '🟢 データベース連携' : '🔴 ローカルのみ'}`,
-                [
-                  {
-                    text: 'OK',
-                    onPress: () => {
-                      console.log('Navigating back');
-                      router.back();
-                    },
-                  },
-                ]
+                '注文確定完了',
+                `🎉 追加注文が確定されました！\n\n📝 ${pendingOrders.length}品目の追加注文\n💰 追加金額: ¥${getPendingTotal().toLocaleString()}\n💰 合計金額: ¥${getTotalAmount().toLocaleString()}`,
+                [{ text: 'OK' }]
               );
             } catch (error) {
-              console.error('支払い処理エラー:', error);
+              console.error('❌ 注文確定エラー:', error);
               Alert.alert(
-                'エラー', 
-                `❌ 支払い処理中にエラーが発生しました:\n\n${error instanceof Error ? error.message : '不明なエラー'}\n\n接続状態: ${isConnected ? '🟢 データベース連携' : '🔴 ローカルのみ'}\n\nデバッグ情報をコンソールで確認してください。`
+                'エラー',
+                `注文確定中にエラーが発生しました:\n\n${error instanceof Error ? error.message : '不明なエラー'}\n\n接続状態: ${isConnected ? '🟢 データベース連携' : '🔴 ローカルのみ'}`
               );
             }
           },
@@ -296,95 +299,117 @@ export default function OrderScreen() {
           onPress={() => setShowTableSelector(true)}
         >
           <Text style={styles.headerTitle}>
-            テーブル {tableNumber} - {cart.length > 0 ? '追加注文' : '注文'}
+            テーブル {tableNumber} - 注文
           </Text>
           <ChevronDown size={20} color="#FFFFFF" />
         </TouchableOpacity>
-        {cart.length > 0 && (
-          <TouchableOpacity
-            style={styles.paymentHeaderButton}
-            onPress={processPayment}
-          >
-            <CreditCard size={20} color="#FFFFFF" />
-          </TouchableOpacity>
-        )}
-        {cart.length === 0 && <View style={styles.placeholder} />}
+        <View style={styles.placeholder} />
       </View>
 
-      <ScrollView style={styles.menuSection}>
-        {categories.map(category => (
-          <View key={category} style={styles.categorySection}>
-            <Text style={styles.categoryTitle}>{category}</Text>
-            {currentMenuItems
-              .filter(item => item.category === category)
-              .map(item => (
-                <TouchableOpacity
-                  key={item.id}
-                  style={styles.menuItem}
-                  onPress={() => addToCart(item)}
-                >
-                  <Image source={{ uri: item.image }} style={styles.menuImage} />
-                  <View style={styles.menuInfo}>
-                    <Text style={styles.menuName}>{item.name}</Text>
-                    <Text style={styles.menuCategory}>{item.category}</Text>
-                    <Text style={styles.menuPrice}>¥{item.price}</Text>
-                  </View>
-                  <TouchableOpacity
-                    style={styles.addButton}
-                    onPress={() => addToCart(item)}
-                  >
-                    <Plus size={24} color="#FFFFFF" />
-                  </TouchableOpacity>
-                </TouchableOpacity>
-              ))}
-          </View>
-        ))}
-      </ScrollView>
-
-      <View style={styles.cartSection}>
-        <Text style={styles.sectionTitle}>注文内容</Text>
-        {cart.length === 0 ? (
-          <Text style={styles.emptyCart}>カートが空です</Text>
-        ) : (
-          <>
-            <ScrollView style={styles.cartItems} showsVerticalScrollIndicator={false}>
-              {cart.map(item => (
-                <View key={item.id} style={styles.cartItem}>
-                  <Text style={styles.cartItemName}>{item.name}</Text>
-                  <View style={styles.quantityControls}>
-                    <TouchableOpacity
-                      style={styles.quantityButton}
-                      onPress={() => removeFromCart(item.id)}
-                    >
-                      <Minus size={16} color="#8B4513" />
-                    </TouchableOpacity>
-                    <Text style={styles.quantity}>{item.quantity}</Text>
-                    <TouchableOpacity
-                      style={styles.quantityButton}
-                      onPress={() => addToCart(item)}
-                    >
-                      <Plus size={16} color="#8B4513" />
-                    </TouchableOpacity>
-                  </View>
-                  <Text style={styles.cartItemPrice}>
-                    ¥{item.price * item.quantity}
-                  </Text>
+      <ScrollView style={styles.content}>
+        {/* 確定済み注文履歴 */}
+        {confirmedOrders.length > 0 && (
+          <View style={styles.confirmedOrdersSection}>
+            <View style={styles.sectionHeader}>
+              <CheckCircle size={20} color="#10B981" />
+              <Text style={styles.sectionTitle}>確定済み注文</Text>
+            </View>
+            <View style={styles.ordersList}>
+              {confirmedOrders.map(item => (
+                <View key={`confirmed-${item.id}`} style={styles.confirmedOrderItem}>
+                  <Text style={styles.confirmedItemName}>{item.name}</Text>
+                  <Text style={styles.confirmedItemQuantity}>× {item.quantity}</Text>
+                  <Text style={styles.confirmedItemPrice}>¥{(item.price * item.quantity).toLocaleString()}</Text>
                 </View>
               ))}
-            </ScrollView>
-            <View style={styles.totalSection}>
-              <Text style={styles.totalText}>合計: ¥{getTotalPrice()}</Text>
-              <TouchableOpacity
-                style={styles.paymentButton}
-                onPress={processPayment}
-              >
-                <CreditCard size={24} color="#FFFFFF" />
-                <Text style={styles.paymentButtonText}>支払い</Text>
-              </TouchableOpacity>
+              <View style={styles.confirmedTotal}>
+                <Text style={styles.confirmedTotalText}>確定済み合計: ¥{getConfirmedTotal().toLocaleString()}</Text>
+              </View>
             </View>
-          </>
+          </View>
         )}
-      </View>
+
+        {/* 追加注文セクション */}
+        <View style={styles.addOrderSection}>
+          <View style={styles.sectionHeader}>
+            <Plus size={20} color="#8B4513" />
+            <Text style={styles.sectionTitle}>
+              {confirmedOrders.length > 0 ? '追加注文' : '新規注文'}
+            </Text>
+          </View>
+
+          {/* メニュー一覧 */}
+          <View style={styles.menuSection}>
+            {categories.map(category => (
+              <View key={category} style={styles.categorySection}>
+                <Text style={styles.categoryTitle}>{category}</Text>
+                {currentMenuItems
+                  .filter(item => item.category === category)
+                  .map(item => (
+                    <TouchableOpacity
+                      key={item.id}
+                      style={styles.menuItem}
+                      onPress={() => addToPendingOrders(item)}
+                    >
+                      <Image source={{ uri: item.image }} style={styles.menuImage} />
+                      <View style={styles.menuInfo}>
+                        <Text style={styles.menuName}>{item.name}</Text>
+                        <Text style={styles.menuCategory}>{item.category}</Text>
+                        <Text style={styles.menuPrice}>¥{item.price}</Text>
+                      </View>
+                      <TouchableOpacity
+                        style={styles.addButton}
+                        onPress={() => addToPendingOrders(item)}
+                      >
+                        <Plus size={24} color="#FFFFFF" />
+                      </TouchableOpacity>
+                    </TouchableOpacity>
+                  ))}
+              </View>
+            ))}
+          </View>
+        </View>
+      </ScrollView>
+
+      {/* 追加注文カート */}
+      {pendingOrders.length > 0 && (
+        <View style={styles.pendingOrdersSection}>
+          <View style={styles.pendingHeader}>
+            <Clock size={16} color="#F59E0B" />
+            <Text style={styles.pendingTitle}>追加注文 ({pendingOrders.length}品目)</Text>
+            <Text style={styles.pendingTotal}>¥{getPendingTotal().toLocaleString()}</Text>
+          </View>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.pendingItems}>
+            {pendingOrders.map(item => (
+              <View key={`pending-${item.id}`} style={styles.pendingItem}>
+                <Text style={styles.pendingItemName}>{item.name}</Text>
+                <View style={styles.pendingItemControls}>
+                  <TouchableOpacity
+                    style={styles.pendingItemButton}
+                    onPress={() => removeFromPendingOrders(item.id)}
+                  >
+                    <Minus size={12} color="#8B4513" />
+                  </TouchableOpacity>
+                  <Text style={styles.pendingItemQuantity}>{item.quantity}</Text>
+                  <TouchableOpacity
+                    style={styles.pendingItemButton}
+                    onPress={() => addToPendingOrders(item)}
+                  >
+                    <Plus size={12} color="#8B4513" />
+                  </TouchableOpacity>
+                </View>
+              </View>
+            ))}
+          </ScrollView>
+          <TouchableOpacity
+            style={styles.confirmButton}
+            onPress={confirmPendingOrders}
+          >
+            <CheckCircle size={20} color="#FFFFFF" />
+            <Text style={styles.confirmButtonText}>注文確定</Text>
+          </TouchableOpacity>
+        </View>
+      )}
 
       {/* テーブル選択モーダル */}
       <Modal
@@ -468,11 +493,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  headerTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#FFFFFF',
-  },
   tableSelector: {
     flex: 1,
     flexDirection: 'row',
@@ -483,54 +503,122 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     backgroundColor: 'rgba(255, 255, 255, 0.1)',
   },
+  headerTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#FFFFFF',
+  },
   placeholder: {
     width: 40,
   },
-  paymentHeaderButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  menuSection: {
+  content: {
     flex: 1,
-    padding: 15,
   },
-  categorySection: {
-    marginBottom: 25,
-  },
-  categoryTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#8B4513',
-    marginBottom: 15,
-  },
-  menuItem: {
+  confirmedOrdersSection: {
     backgroundColor: '#FFFFFF',
+    margin: 15,
     borderRadius: 12,
     padding: 15,
-    marginBottom: 10,
-    flexDirection: 'row',
-    alignItems: 'center',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 3,
   },
-  menuImage: {
-    width: 60,
-    height: 60,
+  sectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 15,
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#333333',
+    marginLeft: 8,
+  },
+  ordersList: {
+    borderTopWidth: 1,
+    borderTopColor: '#F0F0F0',
+    paddingTop: 10,
+  },
+  confirmedOrderItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F8F8F8',
+  },
+  confirmedItemName: {
+    flex: 1,
+    fontSize: 16,
+    color: '#333333',
+  },
+  confirmedItemQuantity: {
+    fontSize: 14,
+    color: '#666666',
+    marginHorizontal: 10,
+  },
+  confirmedItemPrice: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#10B981',
+  },
+  confirmedTotal: {
+    marginTop: 10,
+    paddingTop: 10,
+    borderTopWidth: 2,
+    borderTopColor: '#10B981',
+  },
+  confirmedTotalText: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#10B981',
+    textAlign: 'right',
+  },
+  addOrderSection: {
+    flex: 1,
+    backgroundColor: '#FFFFFF',
+    marginHorizontal: 15,
+    marginBottom: 15,
+    borderRadius: 12,
+    padding: 15,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  menuSection: {
+    flex: 1,
+  },
+  categorySection: {
+    marginBottom: 20,
+  },
+  categoryTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#8B4513',
+    marginBottom: 10,
+  },
+  menuItem: {
+    backgroundColor: '#F5E6D3',
     borderRadius: 8,
+    padding: 12,
+    marginBottom: 8,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  menuImage: {
+    width: 50,
+    height: 50,
+    borderRadius: 6,
   },
   menuInfo: {
     flex: 1,
-    marginLeft: 15,
+    marginLeft: 12,
   },
   menuName: {
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: 'bold',
     color: '#333333',
   },
@@ -540,103 +628,97 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   menuPrice: {
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: 'bold',
     color: '#8B4513',
-    marginTop: 4,
+    marginTop: 2,
   },
   addButton: {
     backgroundColor: '#8B4513',
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
     justifyContent: 'center',
     alignItems: 'center',
   },
-  cartSection: {
+  pendingOrdersSection: {
     backgroundColor: '#FFFFFF',
-    padding: 15,
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
-    maxHeight: 350,
+    padding: 15,
+    maxHeight: 200,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: -2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 5,
   },
-  sectionTitle: {
-    fontSize: 18,
+  pendingHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  pendingTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#F59E0B',
+    marginLeft: 6,
+    flex: 1,
+  },
+  pendingTotal: {
+    fontSize: 16,
     fontWeight: 'bold',
     color: '#8B4513',
+  },
+  pendingItems: {
+    maxHeight: 80,
     marginBottom: 15,
   },
-  emptyCart: {
-    textAlign: 'center',
-    color: '#666666',
-    fontSize: 16,
-    padding: 20,
+  pendingItem: {
+    backgroundColor: '#FEF3C7',
+    borderRadius: 8,
+    padding: 10,
+    marginRight: 10,
+    minWidth: 120,
   },
-  cartItems: {
-    maxHeight: 200,
-  },
-  cartItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: '#F0F0F0',
-  },
-  cartItemName: {
-    flex: 1,
-    fontSize: 16,
+  pendingItemName: {
+    fontSize: 12,
+    fontWeight: 'bold',
     color: '#333333',
+    marginBottom: 5,
   },
-  quantityControls: {
+  pendingItemControls: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginHorizontal: 10,
+    justifyContent: 'center',
   },
-  quantityButton: {
-    backgroundColor: '#F5E6D3',
-    width: 30,
-    height: 30,
-    borderRadius: 15,
+  pendingItemButton: {
+    backgroundColor: '#FFFFFF',
+    width: 20,
+    height: 20,
+    borderRadius: 10,
     justifyContent: 'center',
     alignItems: 'center',
   },
-  quantity: {
-    marginHorizontal: 15,
-    fontSize: 16,
+  pendingItemQuantity: {
+    marginHorizontal: 8,
+    fontSize: 14,
     fontWeight: 'bold',
     color: '#333333',
   },
-  cartItemPrice: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#8B4513',
-  },
-  totalSection: {
-    marginTop: 15,
-    paddingTop: 15,
-    borderTopWidth: 2,
-    borderTopColor: '#8B4513',
-  },
-  totalText: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#8B4513',
-    textAlign: 'center',
-    marginBottom: 15,
-  },
-  paymentButton: {
+  confirmButton: {
     backgroundColor: '#8B4513',
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    padding: 15,
-    borderRadius: 10,
+    paddingVertical: 12,
+    borderRadius: 8,
   },
-  paymentButtonText: {
+  confirmButtonText: {
     color: '#FFFFFF',
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: 'bold',
-    marginLeft: 10,
+    marginLeft: 8,
   },
   modalOverlay: {
     flex: 1,
