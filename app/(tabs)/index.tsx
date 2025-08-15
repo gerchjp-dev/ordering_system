@@ -791,6 +791,7 @@ export default function TablesScreen() {
                   </Text>
                 </View>
               )}
+            </View>
             </TouchableOpacity>
           ))}
         </View>
