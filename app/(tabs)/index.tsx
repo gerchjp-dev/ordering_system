@@ -770,17 +770,9 @@ export default function TablesScreen() {
                 {table.status === 'occupied' && <XCircle size={16} color="#FFFFFF" />}
                 {table.status === 'reserved' && <Clock size={16} color="#FFFFFF" />}
                 {table.status === 'cleaning' && <Users size={16} color="#FFFFFF" />}
-                
-                <TouchableOpacity
-                  style={styles.hamburgerItem}
-                  onPress={() => {
-                    setShowHamburgerMenu(false);
-                    router.push('/settings');
-                  }}
-                >
-                  <Settings size={24} color="#8B4513" />
-                  <Text style={styles.hamburgerItemText}>設定</Text>
-                </TouchableOpacity>
+              </View>
+              
+              <Text style={styles.tableNumber}>{table.number}</Text>
               <Text style={styles.tableSeats}>{table.seats}席</Text>
               <Text style={[styles.tableStatus, { color: getStatusColor(table.status) }]}>
                 {getStatusText(table.status)}
