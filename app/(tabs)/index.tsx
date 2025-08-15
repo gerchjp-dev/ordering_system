@@ -62,8 +62,6 @@ export default function TablesScreen() {
   const [showEditModal, setShowEditModal] = useState(false);
   const [orderHistory, setOrderHistory] = useState<any[]>([]);
   const [showHamburgerMenu, setShowHamburgerMenu] = useState(false);
-  const [showTableManagementModal, setShowTableManagementModal] = useState(false);
-  const [selectedTableForManagement, setSelectedTableForManagement] = useState<Table | null>(null);
   const router = useRouter();
 
   // データベース接続状態の確認
@@ -773,12 +771,11 @@ export default function TablesScreen() {
                 style={styles.tableSettingsButton}
                 onPress={(e) => {
                   e.stopPropagation();
-                  setSelectedTableForManagement(table);
-                  setShowTableManagementModal(true);
+                  handleTableLongPress(table);
                 }}
                 hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
               >
-                <Edit size={20} color="#8B4513" />
+                <Edit size={24} color="#8B4513" />
               </TouchableOpacity>
             </TouchableOpacity>
           ))}
@@ -818,131 +815,6 @@ export default function TablesScreen() {
                 <Text style={styles.cancelButtonText}>キャンセル</Text>
               </TouchableOpacity>
               
-              <TouchableOpacity
-                style={styles.saveButton}
-                onPress={addNewTable}
-              >
-                <Text style={styles.saveButtonText}>追加</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
-      </Modal>
-
-      {/* テーブル編集モーダル */}
-      <Modal
-        visible={showEditModal}
-        transparent={true}
-        animationType="slide"
-        onRequestClose={() => setShowEditModal(false)}
-      >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>テーブル名を変更</Text>
-            
-            <Text style={styles.modalDescription}>
-              わかりやすいテーブル名に変更できます（例：窓際席、カウンター1番など）
-            </Text>
-            
-            {editingTable && (
-              <TextInput
-                style={styles.input}
-                placeholder="テーブル名（例：窓際席、カウンター1番）"
-                value={editingTable.number}
-                onChangeText={(text) => setEditingTable({...editingTable, number: text})}
-                maxLength={20}
-              />
-            )}
-            
-            <View style={styles.modalButtons}>
-              <TouchableOpacity
-                style={styles.cancelButton}
-                onPress={() => {
-                  setShowEditModal(false);
-                  setEditingTable(null);
-                }}
-              >
-                <Text style={styles.cancelButtonText}>キャンセル</Text>
-              </TouchableOpacity>
-              
-              <TouchableOpacity
-                style={styles.saveButton}
-                onPress={updateTableName}
-              >
-                <Text style={styles.saveButtonText}>保存</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
-      </Modal>
-
-      {/* ハンバーガーメニューモーダル */}
-      <Modal
-        visible={showHamburgerMenu}
-        transparent={true}
-        animationType="slide"
-        onRequestClose={() => setShowHamburgerMenu(false)}
-      >
-        <View style={styles.hamburgerOverlay}>
-          <View style={styles.hamburgerContent}>
-            <View style={styles.hamburgerHeader}>
-              <Text style={styles.hamburgerTitle}>メニュー</Text>
-              <TouchableOpacity
-                style={styles.hamburgerCloseButton}
-                onPress={() => setShowHamburgerMenu(false)}
-              >
-                <X size={24} color="#8B4513" />
-              </TouchableOpacity>
-            </View>
-            
-            <View style={styles.hamburgerItems}>
-              <TouchableOpacity
-                style={styles.hamburgerItem}
-                onPress={() => {
-                  setShowHamburgerMenu(false);
-                  router.push('/menu');
-                }}
-              >
-                <UtensilsCrossed size={24} color="#8B4513" />
-                <Text style={styles.hamburgerItemText}>メニュー管理</Text>
-              </TouchableOpacity>
-              
-              <TouchableOpacity
-                style={styles.hamburgerItem}
-                onPress={() => {
-                  setShowHamburgerMenu(false);
-                  router.push('/order-history');
-                }}
-              >
-                <ClipboardList size={24} color="#8B4513" />
-                <Text style={styles.hamburgerItemText}>注文履歴</Text>
-              </TouchableOpacity>
-              
-              <TouchableOpacity
-                style={styles.hamburgerItem}
-                onPress={() => {
-                  setShowHamburgerMenu(false);
-                  router.push('/analytics');
-                }}
-              >
-                <TrendingUp size={24} color="#8B4513" />
-                <Text style={styles.hamburgerItemText}>売上分析</Text>
-              </TouchableOpacity>
-              
-              <TouchableOpacity
-                style={styles.hamburgerItem}
-                onPress={() => {
-                  setShowHamburgerMenu(false);
-                  router.push('/settings');
-                }}
-              >
-                <Settings size={24} color="#8B4513" />
-                <Text style={styles.hamburgerItemText}>設定</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
-      </Modal>
     </View>
   );
 }
@@ -1135,9 +1007,9 @@ const styles = StyleSheet.create({
     position: 'absolute',
     bottom: 8,
     right: 8,
-    width: 28,
-    height: 28,
-    borderRadius: 14,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
     backgroundColor: 'rgba(255, 255, 255, 0.9)',
     justifyContent: 'center',
     alignItems: 'center',
@@ -1265,71 +1137,5 @@ const styles = StyleSheet.create({
     color: '#333333',
     marginLeft: 16,
     fontWeight: '500',
-  },
-  tableManagementModal: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 16,
-    padding: 0,
-    width: '90%',
-    maxWidth: 400,
-    maxHeight: '80%',
-  },
-  modalHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: 20,
-    borderBottomWidth: 1,
-    borderBottomColor: '#E0E0E0',
-  },
-  modalCloseButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: '#F5E6D3',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  tableManagementContent: {
-    padding: 20,
-  },
-  tableInfoSection: {
-    backgroundColor: '#F5E6D3',
-    borderRadius: 12,
-    padding: 15,
-    marginBottom: 20,
-  },
-  tableInfoTitle: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#8B4513',
-    marginBottom: 10,
-  },
-  tableInfoText: {
-    fontSize: 14,
-    color: '#333333',
-    marginBottom: 5,
-  },
-  managementActions: {
-    gap: 12,
-  },
-  managementButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#F8F9FA',
-    borderRadius: 12,
-    padding: 16,
-    borderWidth: 1,
-    borderColor: '#E0E0E0',
-  },
-  managementButtonText: {
-    fontSize: 16,
-    color: '#333333',
-    marginLeft: 12,
-    fontWeight: '500',
-  },
-  deleteButton: {
-    backgroundColor: '#FEF2F2',
-    borderColor: '#FECACA',
   },
 });
