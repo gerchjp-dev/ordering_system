@@ -62,6 +62,8 @@ export default function TablesScreen() {
   const [showEditModal, setShowEditModal] = useState(false);
   const [orderHistory, setOrderHistory] = useState<any[]>([]);
   const [showHamburgerMenu, setShowHamburgerMenu] = useState(false);
+  const [showTableManagementModal, setShowTableManagementModal] = useState(false);
+  const [selectedTableForManagement, setSelectedTableForManagement] = useState<Table | null>(null);
   const router = useRouter();
 
   // データベース接続状態の確認
@@ -771,11 +773,12 @@ export default function TablesScreen() {
                 style={styles.tableSettingsButton}
                 onPress={(e) => {
                   e.stopPropagation();
-                  handleTableLongPress(table);
+                  setSelectedTableForManagement(table);
+                  setShowTableManagementModal(true);
                 }}
                 hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
               >
-                <Edit size={16} color="#8B4513" />
+                <Edit size={20} color="#8B4513" />
               </TouchableOpacity>
             </TouchableOpacity>
           ))}
