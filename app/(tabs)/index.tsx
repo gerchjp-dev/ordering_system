@@ -736,6 +736,8 @@ export default function TablesScreen() {
               ]}
               onPress={() => handleTablePress(table)}
               onLongPress={() => handleTableLongPress(table)}
+              delayLongPress={500}
+              activeOpacity={0.7}
             >
               <View style={[styles.statusIndicator, { backgroundColor: getStatusColor(table.status) }]}>
                 {table.status === 'available' && <CheckCircle size={16} color="#FFFFFF" />}
@@ -763,6 +765,15 @@ export default function TablesScreen() {
                   </Text>
                 </View>
               )}
+              
+              {/* PC用の設定ボタンを追加 */}
+              <TouchableOpacity
+                style={styles.tableSettingsButton}
+                onPress={() => handleTableLongPress(table)}
+                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+              >
+                <Edit size={16} color="#8B4513" />
+              </TouchableOpacity>
             </TouchableOpacity>
           ))}
         </View>
@@ -1113,6 +1124,22 @@ const styles = StyleSheet.create({
     color: '#8B4513',
     fontWeight: 'bold',
     marginTop: 2,
+  },
+  tableSettingsButton: {
+    position: 'absolute',
+    bottom: 8,
+    right: 8,
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.2,
+    shadowRadius: 2,
+    elevation: 2,
   },
   modalOverlay: {
     flex: 1,
