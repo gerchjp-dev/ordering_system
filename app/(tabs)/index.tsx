@@ -185,18 +185,6 @@ export default function TablesScreen() {
         [
           { text: 'キャンセル', style: 'cancel' },
           {
-            text: 'メニュー管理',
-            onPress: () => router.push('/menu'),
-          },
-          {
-            text: '注文履歴',
-            onPress: () => router.push('/order-history'),
-          },
-          {
-            text: '支払い画面',
-            onPress: () => router.push(`/payment?tableId=${table.id}&tableNumber=${table.number}`),
-          },
-          {
             text: 'テーブル名変更',
             onPress: () => {
               setEditingTable(table);
@@ -204,13 +192,13 @@ export default function TablesScreen() {
             },
           },
           {
+            text: '予約済みに変更',
+            onPress: () => updateTableStatus(table.id, 'reserved'),
+          },
+          {
             text: 'テーブル削除',
             style: 'destructive',
             onPress: () => deleteTable(table.id),
-          },
-          {
-            text: '予約済みに変更',
-            onPress: () => updateTableStatus(table.id, 'reserved'),
           },
         ]
       );
@@ -221,16 +209,11 @@ export default function TablesScreen() {
         [
           { text: 'キャンセル', style: 'cancel' },
           {
-            text: 'メニュー管理',
-            onPress: () => router.push('/menu'),
-          },
-          {
-            text: '注文履歴',
-            onPress: () => router.push('/order-history'),
-          },
-          {
-            text: '支払い画面',
-            onPress: () => router.push(`/payment?tableId=${table.id}&tableNumber=${table.number}`),
+            text: 'テーブル名変更',
+            onPress: () => {
+              setEditingTable(table);
+              setShowEditModal(true);
+            },
           },
           {
             text: 'テーブル削除（強制）',
@@ -246,18 +229,6 @@ export default function TablesScreen() {
         [
           { text: 'キャンセル', style: 'cancel' },
           {
-            text: 'メニュー管理',
-            onPress: () => router.push('/menu'),
-          },
-          {
-            text: '注文履歴',
-            onPress: () => router.push('/order-history'),
-          },
-          {
-            text: '支払い画面',
-            onPress: () => router.push(`/payment?tableId=${table.id}&tableNumber=${table.number}`),
-          },
-          {
             text: 'テーブル名変更',
             onPress: () => {
               setEditingTable(table);
@@ -265,13 +236,13 @@ export default function TablesScreen() {
             },
           },
           {
+            text: '予約解除',
+            onPress: () => updateTableStatus(table.id, 'available'),
+          },
+          {
             text: 'テーブル削除',
             style: 'destructive',
             onPress: () => deleteTable(table.id),
-          },
-          {
-            text: '予約解除',
-            onPress: () => updateTableStatus(table.id, 'available'),
           },
         ]
       );
@@ -282,16 +253,11 @@ export default function TablesScreen() {
         [
           { text: 'キャンセル', style: 'cancel' },
           {
-            text: 'メニュー管理',
-            onPress: () => router.push('/menu'),
-          },
-          {
-            text: '注文履歴',
-            onPress: () => router.push('/order-history'),
-          },
-          {
-            text: '支払い画面',
-            onPress: () => router.push(`/payment?tableId=${table.id}&tableNumber=${table.number}`),
+            text: 'テーブル名変更',
+            onPress: () => {
+              setEditingTable(table);
+              setShowEditModal(true);
+            },
           },
           {
             text: '清掃完了',
@@ -502,6 +468,12 @@ export default function TablesScreen() {
       return;
     }
 
+    // テーブル名の重複チェック
+    const existingTable = tables.find(t => t.id !== editingTable.id && t.number === editingTable.number.trim());
+    if (existingTable) {
+      Alert.alert('エラー', 'このテーブル名は既に使用されています');
+      return;
+    }
     updateTableInDB(editingTable.id, { number: editingTable.number });
     setShowEditModal(false);
     setEditingTable(null);
@@ -851,12 +823,17 @@ export default function TablesScreen() {
           <View style={styles.modalContent}>
             <Text style={styles.modalTitle}>テーブル名を変更</Text>
             
+            <Text style={styles.modalDescription}>
+              わかりやすいテーブル名に変更できます（例：窓際席、カウンター1番など）
+            </Text>
+            
             {editingTable && (
               <TextInput
                 style={styles.input}
-                placeholder="テーブル名"
+                placeholder="テーブル名（例：窓際席、カウンター1番）"
                 value={editingTable.number}
                 onChangeText={(text) => setEditingTable({...editingTable, number: text})}
+                maxLength={20}
               />
             )}
             
@@ -1156,6 +1133,13 @@ const styles = StyleSheet.create({
     color: '#8B4513',
     marginBottom: 20,
     textAlign: 'center',
+  },
+  modalDescription: {
+    fontSize: 14,
+    color: '#666666',
+    marginBottom: 15,
+    textAlign: 'center',
+    lineHeight: 20,
   },
   input: {
     borderWidth: 1,
