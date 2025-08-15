@@ -173,6 +173,10 @@ export default function TablesScreen() {
             onPress: () => router.push(`/menu?tableId=${table.id}&tableNumber=${table.number}&mode=additional`),
           },
           {
+            text: 'メニュー管理',
+            onPress: () => router.push('/menu'),
+          },
+          {
             text: '支払い・退席',
             onPress: () => finishOrder(table.id),
           },
@@ -201,6 +205,14 @@ export default function TablesScreen() {
         [
           { text: 'キャンセル', style: 'cancel' },
           {
+            text: 'メニュー管理',
+            onPress: () => router.push('/menu'),
+          },
+          {
+            text: '注文履歴',
+            onPress: () => router.push('/order-history'),
+          },
+          {
             text: 'テーブル名変更',
             onPress: () => {
               setEditingTable(table);
@@ -225,6 +237,14 @@ export default function TablesScreen() {
         [
           { text: 'キャンセル', style: 'cancel' },
           {
+            text: 'メニュー管理',
+            onPress: () => router.push('/menu'),
+          },
+          {
+            text: '注文履歴',
+            onPress: () => router.push('/order-history'),
+          },
+          {
             text: '支払い・退席',
             onPress: () => finishOrder(table.id),
           },
@@ -241,6 +261,14 @@ export default function TablesScreen() {
         '何をしますか？',
         [
           { text: 'キャンセル', style: 'cancel' },
+          {
+            text: 'メニュー管理',
+            onPress: () => router.push('/menu'),
+          },
+          {
+            text: '注文履歴',
+            onPress: () => router.push('/order-history'),
+          },
           {
             text: 'テーブル名変更',
             onPress: () => {
@@ -262,11 +290,19 @@ export default function TablesScreen() {
     } else if (table.status === 'cleaning') {
       Alert.alert(
         `テーブル ${table.number}`,
-        '清掃完了しましたか？',
+        '何をしますか？',
         [
-          { text: 'いいえ', style: 'cancel' },
+          { text: 'キャンセル', style: 'cancel' },
           {
-            text: '完了',
+            text: 'メニュー管理',
+            onPress: () => router.push('/menu'),
+          },
+          {
+            text: '注文履歴',
+            onPress: () => router.push('/order-history'),
+          },
+          {
+            text: '清掃完了',
             onPress: () => updateTableStatus(table.id, 'available'),
           },
         ]

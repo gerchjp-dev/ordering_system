@@ -72,6 +72,14 @@ export default function MenuScreen() {
   const [cart, setCart] = useState<any[]>([]);
   const [menuItems, setMenuItems] = useState<MenuItem[]>(initialMenuItems);
   const [categories] = useState(['定食', 'ドリンク', 'デザート']);
+  const [showAddMenuModal, setShowAddMenuModal] = useState(false);
+  const [newMenuItem, setNewMenuItem] = useState({
+    name: '',
+    price: '',
+    category: '定食',
+    description: '',
+    image: 'https://images.pexels.com/photos/312418/pexels-photo-312418.jpeg?auto=compress&cs=tinysrgb&w=300',
+  });
 
   // データベースからメニューを読み込み
   const loadMenuItems = async () => {
@@ -98,6 +106,50 @@ export default function MenuScreen() {
       loadMenuItems();
     }
   }, [database]);
+
+  const addMenuItem = async () => {
+    if (!newMenuItem.name || !newMenuItem.price) {
+      Alert.alert('エラー', '商品名と価格を入力してください');
+      return;
+    }
+
+    try {
+      const item: MenuItem = {
+        id: `menu-${Date.now()}`,
+        name: newMenuItem.name,
+        price: parseInt(newMenuItem.price),
+        category: newMenuItem.category,
+        description: newMenuItem.description,
+        image: newMenuItem.image,
+      };
+
+      if (database && isConnected) {
+        await database.createMenuItem({
+          name: item.name,
+          price: item.price,
+          category: item.category,
+          description: item.description,
+          image_url: item.image,
+        });
+        await loadMenuItems(); // データベースから再読み込み
+      } else {
+        setMenuItems(prev => [...prev, item]);
+      }
+
+      setNewMenuItem({
+        name: '',
+        price: '',
+        category: categories[0],
+        description: '',
+        image: 'https://images.pexels.com/photos/312418/pexels-photo-312418.jpeg?auto=compress&cs=tinysrgb&w=300',
+      });
+      setShowAddMenuModal(false);
+      Alert.alert('成功', '新しいメニュー項目が追加されました');
+    } catch (error) {
+      console.error('メニュー追加エラー:', error);
+      Alert.alert('エラー', 'メニューの追加に失敗しました');
+    }
+  };
 
   // テーブルの既存注文を読み込み
   React.useEffect(() => {
@@ -334,7 +386,13 @@ export default function MenuScreen() {
       <View style={styles.container}>
         <View style={styles.header}>
           <Text style={styles.headerTitle}>メニュー管理</Text>
-          <View style={styles.connectionStatus}>
+          <View style={styles.headerActions}>
+            <TouchableOpacity
+              style={styles.addMenuButton}
+              onPress={() => setShowAddMenuModal(true)}
+            >
+              <Plus size={20} color="#FFFFFF" />
+            </TouchableOpacity>
             <Coffee size={24} color="#FFFFFF" />
             {isConnected && <View style={styles.connectedDot} />}
           </View>
@@ -357,6 +415,88 @@ export default function MenuScreen() {
             </View>
           ))}
         </ScrollView>
+
+        {/* メニュー追加モーダル */}
+        <Modal
+          visible={showAddMenuModal}
+          transparent={true}
+          animationType="slide"
+          onRequestClose={() => setShowAddMenuModal(false)}
+        >
+          <View style={styles.modalOverlay}>
+            <View style={styles.modalContent}>
+              <Text style={styles.modalTitle}>新しいメニュー項目を追加</Text>
+              
+              <TextInput
+                style={styles.input}
+                placeholder="商品名"
+                value={newMenuItem.name}
+                onChangeText={(text) => setNewMenuItem({...newMenuItem, name: text})}
+              />
+              
+              <TextInput
+                style={styles.input}
+                placeholder="価格"
+                keyboardType="numeric"
+                value={newMenuItem.price}
+                onChangeText={(text) => setNewMenuItem({...newMenuItem, price: text})}
+              />
+              
+              <View style={styles.pickerContainer}>
+                <Text style={styles.pickerLabel}>カテゴリ:</Text>
+                <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.categoryPicker}>
+                  {categories.map((category) => (
+                    <TouchableOpacity
+                      key={category}
+                      style={[
+                        styles.categoryOption,
+                        newMenuItem.category === category && styles.categoryOptionSelected
+                      ]}
+                      onPress={() => setNewMenuItem({...newMenuItem, category})}
+                    >
+                      <Text style={[
+                        styles.categoryOptionText,
+                        newMenuItem.category === category && styles.categoryOptionTextSelected
+                      ]}>
+                        {category}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </ScrollView>
+              </View>
+              
+              <TextInput
+                style={styles.input}
+                placeholder="説明"
+                value={newMenuItem.description}
+                onChangeText={(text) => setNewMenuItem({...newMenuItem, description: text})}
+              />
+              
+              <TextInput
+                style={styles.input}
+                placeholder="画像URL"
+                value={newMenuItem.image}
+                onChangeText={(text) => setNewMenuItem({...newMenuItem, image: text})}
+              />
+              
+              <View style={styles.modalButtons}>
+                <TouchableOpacity
+                  style={styles.cancelButton}
+                  onPress={() => setShowAddMenuModal(false)}
+                >
+                  <Text style={styles.cancelButtonText}>キャンセル</Text>
+                </TouchableOpacity>
+                
+                <TouchableOpacity
+                  style={styles.saveButton}
+                  onPress={addMenuItem}
+                >
+                  <Text style={styles.saveButtonText}>追加</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </View>
+        </Modal>
       </View>
     );
   }
@@ -502,6 +642,20 @@ const styles = StyleSheet.create({
   connectionStatus: {
     alignItems: 'center',
     position: 'relative',
+  },
+  headerActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    position: 'relative',
+  },
+  addMenuButton: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   cartButton: {
     width: 40,
@@ -684,5 +838,95 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 16,
     fontWeight: 'bold',
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContent: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    padding: 20,
+    width: '90%',
+    maxWidth: 400,
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#8B4513',
+    marginBottom: 20,
+    textAlign: 'center',
+  },
+  input: {
+    borderWidth: 1,
+    borderColor: '#E0E0E0',
+    borderRadius: 8,
+    padding: 12,
+    marginBottom: 15,
+    fontSize: 16,
+  },
+  pickerContainer: {
+    marginBottom: 15,
+  },
+  pickerLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#333333',
+    marginBottom: 8,
+  },
+  categoryPicker: {
+    flexDirection: 'row',
+  },
+  categoryOption: {
+    backgroundColor: '#F5E6D3',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 15,
+    marginRight: 8,
+    borderWidth: 1,
+    borderColor: '#E0E0E0',
+  },
+  categoryOptionSelected: {
+    backgroundColor: '#8B4513',
+    borderColor: '#8B4513',
+  },
+  categoryOptionText: {
+    color: '#8B4513',
+    fontWeight: '600',
+    fontSize: 14,
+  },
+  categoryOptionTextSelected: {
+    color: '#FFFFFF',
+  },
+  modalButtons: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 10,
+  },
+  cancelButton: {
+    backgroundColor: '#E5E5E5',
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 8,
+    flex: 0.45,
+  },
+  cancelButtonText: {
+    color: '#666666',
+    fontWeight: 'bold',
+    textAlign: 'center',
+  },
+  saveButton: {
+    backgroundColor: '#8B4513',
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 8,
+    flex: 0.45,
+  },
+  saveButtonText: {
+    color: '#FFFFFF',
+    fontWeight: 'bold',
+    textAlign: 'center',
   },
 });

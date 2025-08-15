@@ -5,8 +5,9 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
+  Alert,
 } from 'react-native';
-import { Clock, Receipt, Trash2 } from 'lucide-react-native';
+import { Clock, Receipt, Trash2, RefreshCw } from 'lucide-react-native';
 import { useDatabase } from '@/hooks/useDatabase';
 
 interface OrderHistoryItem {
@@ -57,12 +58,14 @@ const mockOrderHistory: OrderHistoryItem[] = [
 export default function OrderHistoryScreen() {
   const { database, isConnected } = useDatabase();
   const [orderHistory, setOrderHistory] = useState<OrderHistoryItem[]>(mockOrderHistory);
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   // データベースから注文履歴を読み込み
   const loadOrderHistory = async () => {
     if (!database) return;
     
     try {
+      setIsRefreshing(true);
       const dbHistory = await database.getOrderHistory();
       const formattedHistory: OrderHistoryItem[] = dbHistory.map(item => ({
        id: item.id.toString(),
@@ -74,14 +77,54 @@ export default function OrderHistoryScreen() {
       setOrderHistory(formattedHistory);
     } catch (error) {
       console.error('注文履歴読み込みエラー:', error);
+      Alert.alert('エラー', '注文履歴の読み込みに失敗しました');
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
+
+  // グローバルな注文履歴も取得
+  const loadGlobalOrderHistory = () => {
+    if ((global as any).getOrderHistory) {
+      const globalHistory = (global as any).getOrderHistory();
+      if (globalHistory && globalHistory.length > 0) {
+        setOrderHistory(prev => {
+          // 重複を避けるため、IDでフィルタリング
+          const existingIds = prev.map(item => item.id);
+          const newItems = globalHistory.filter((item: any) => !existingIds.includes(item.id));
+          return [...prev, ...newItems];
+        });
+      }
     }
   };
 
   useEffect(() => {
     if (database) {
       loadOrderHistory();
+    } else {
+      // データベース未接続時はグローバル履歴を確認
+      loadGlobalOrderHistory();
     }
   }, [database]);
+
+  // 定期的にグローバル履歴をチェック
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if (!database) {
+        loadGlobalOrderHistory();
+      }
+    }, 5000); // 5秒ごとにチェック
+
+    return () => clearInterval(interval);
+  }, [database]);
+
+  const handleRefresh = async () => {
+    if (database) {
+      await loadOrderHistory();
+    } else {
+      loadGlobalOrderHistory();
+    }
+  };
 
   const formatDate = (date: Date) => {
     return date.toLocaleDateString('ja-JP', {
@@ -97,10 +140,28 @@ export default function OrderHistoryScreen() {
     <View style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.headerTitle}>注文履歴</Text>
-        <View style={styles.connectionStatus}>
+        <View style={styles.headerActions}>
+          <TouchableOpacity
+            style={styles.refreshButton}
+            onPress={handleRefresh}
+            disabled={isRefreshing}
+          >
+            <RefreshCw 
+              size={20} 
+              color="#FFFFFF" 
+              style={isRefreshing ? { opacity: 0.5 } : {}}
+            />
+          </TouchableOpacity>
           <Receipt size={24} color="#FFFFFF" />
           {isConnected && <View style={styles.connectedDot} />}
         </View>
+      </View>
+
+      <View style={styles.statusBar}>
+        <Text style={styles.statusText}>
+          {isConnected ? '🟢 データベース連携' : '🔴 ローカルデータ'} • {orderHistory.length}件の履歴
+        </Text>
+        {isRefreshing && <Text style={styles.refreshingText}>更新中...</Text>}
       </View>
 
       <ScrollView style={styles.content}>
@@ -108,6 +169,12 @@ export default function OrderHistoryScreen() {
           <View style={styles.emptyState}>
             <Receipt size={64} color="#CCCCCC" />
             <Text style={styles.emptyText}>注文履歴がありません</Text>
+            <TouchableOpacity
+              style={styles.refreshEmptyButton}
+              onPress={handleRefresh}
+            >
+              <Text style={styles.refreshEmptyButtonText}>更新</Text>
+            </TouchableOpacity>
           </View>
         ) : (
           orderHistory.map(order => (
@@ -158,8 +225,19 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#FFFFFF',
   },
-  connectionStatus: {
+  headerActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
     position: 'relative',
+  },
+  refreshButton: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   connectedDot: {
     position: 'absolute',
@@ -169,6 +247,24 @@ const styles = StyleSheet.create({
     height: 8,
     borderRadius: 4,
     backgroundColor: '#10B981',
+  },
+  statusBar: {
+    backgroundColor: 'rgba(139, 69, 19, 0.1)',
+    paddingHorizontal: 15,
+    paddingVertical: 8,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  statusText: {
+    fontSize: 12,
+    color: '#8B4513',
+    fontWeight: '600',
+  },
+  refreshingText: {
+    fontSize: 12,
+    color: '#8B4513',
+    fontStyle: 'italic',
   },
   content: {
     flex: 1,
@@ -184,6 +280,17 @@ const styles = StyleSheet.create({
     fontSize: 18,
     color: '#666666',
     marginTop: 20,
+    marginBottom: 20,
+  },
+  refreshEmptyButton: {
+    backgroundColor: '#8B4513',
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 8,
+  },
+  refreshEmptyButtonText: {
+    color: '#FFFFFF',
+    fontWeight: 'bold',
   },
   orderCard: {
     backgroundColor: '#FFFFFF',
