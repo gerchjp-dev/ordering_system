@@ -7,7 +7,7 @@ import {
   TouchableOpacity,
   Image,
 } from 'react-native';
-import { Coffee, ArrowLeft, ShoppingCart } from 'lucide-react-native';
+import { Coffee, ArrowLeft, ShoppingCart, Plus } from 'lucide-react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useDatabase } from '@/hooks/useDatabase';
 import { Alert } from 'react-native';
