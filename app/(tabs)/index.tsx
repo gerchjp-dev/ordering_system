@@ -815,6 +815,122 @@ export default function TablesScreen() {
                 <Text style={styles.cancelButtonText}>キャンセル</Text>
               </TouchableOpacity>
               
+              <TouchableOpacity
+                style={styles.saveButton}
+                onPress={addNewTable}
+              >
+                <Text style={styles.saveButtonText}>追加</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      <Modal
+        visible={showEditModal}
+        transparent={true}
+        animationType="slide"
+        onRequestClose={() => setShowEditModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>テーブル名を変更</Text>
+            
+            <TextInput
+              style={styles.input}
+              placeholder="テーブル番号"
+              value={editingTable?.number || ''}
+              onChangeText={(text) => setEditingTable(prev => prev ? { ...prev, number: text } : null)}
+            />
+            
+            <View style={styles.modalButtons}>
+              <TouchableOpacity
+                style={styles.cancelButton}
+                onPress={() => {
+                  setShowEditModal(false);
+                  setEditingTable(null);
+                }}
+              >
+                <Text style={styles.cancelButtonText}>キャンセル</Text>
+              </TouchableOpacity>
+              
+              <TouchableOpacity
+                style={styles.saveButton}
+                onPress={updateTableName}
+              >
+                <Text style={styles.saveButtonText}>保存</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      <Modal
+        visible={showHamburgerMenu}
+        transparent={true}
+        animationType="slide"
+        onRequestClose={() => setShowHamburgerMenu(false)}
+      >
+        <View style={styles.hamburgerOverlay}>
+          <View style={styles.hamburgerContent}>
+            <View style={styles.hamburgerHeader}>
+              <Text style={styles.hamburgerTitle}>メニュー</Text>
+              <TouchableOpacity
+                style={styles.hamburgerCloseButton}
+                onPress={() => setShowHamburgerMenu(false)}
+              >
+                <X size={24} color="#8B4513" />
+              </TouchableOpacity>
+            </View>
+            
+            <View style={styles.hamburgerItems}>
+              <TouchableOpacity
+                style={styles.hamburgerItem}
+                onPress={() => {
+                  setShowHamburgerMenu(false);
+                  router.push('/menu');
+                }}
+              >
+                <UtensilsCrossed size={24} color="#8B4513" />
+                <Text style={styles.hamburgerItemText}>メニュー管理</Text>
+              </TouchableOpacity>
+              
+              <TouchableOpacity
+                style={styles.hamburgerItem}
+                onPress={() => {
+                  setShowHamburgerMenu(false);
+                  router.push('/history');
+                }}
+              >
+                <ClipboardList size={24} color="#8B4513" />
+                <Text style={styles.hamburgerItemText}>注文履歴</Text>
+              </TouchableOpacity>
+              
+              <TouchableOpacity
+                style={styles.hamburgerItem}
+                onPress={() => {
+                  setShowHamburgerMenu(false);
+                  router.push('/analytics');
+                }}
+              >
+                <TrendingUp size={24} color="#8B4513" />
+                <Text style={styles.hamburgerItemText}>売上分析</Text>
+              </TouchableOpacity>
+              
+              <TouchableOpacity
+                style={styles.hamburgerItem}
+                onPress={() => {
+                  setShowHamburgerMenu(false);
+                  router.push('/settings');
+                }}
+              >
+                <Settings size={24} color="#8B4513" />
+                <Text style={styles.hamburgerItemText}>設定</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
