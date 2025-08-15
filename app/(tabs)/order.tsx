@@ -312,7 +312,7 @@ export default function OrderScreen() {
           <View style={styles.confirmedOrdersSection}>
             <View style={styles.sectionHeader}>
               <CheckCircle size={20} color="#10B981" />
-              <Text style={styles.sectionTitle}>確定済み注文</Text>
+              <Text style={styles.sectionTitle}>注文履歴</Text>
             </View>
             <View style={styles.ordersList}>
               {confirmedOrders.map(item => (
@@ -323,7 +323,7 @@ export default function OrderScreen() {
                 </View>
               ))}
               <View style={styles.confirmedTotal}>
-                <Text style={styles.confirmedTotalText}>確定済み合計: ¥{getConfirmedTotal().toLocaleString()}</Text>
+                <Text style={styles.confirmedTotalText}>履歴合計: ¥{getConfirmedTotal().toLocaleString()}</Text>
               </View>
             </View>
           </View>
@@ -334,7 +334,7 @@ export default function OrderScreen() {
           <View style={styles.sectionHeader}>
             <Plus size={20} color="#8B4513" />
             <Text style={styles.sectionTitle}>
-              {confirmedOrders.length > 0 ? '追加注文' : '新規注文'}
+              {confirmedOrders.length > 0 ? '追加注文' : '注文'}
             </Text>
           </View>
 
