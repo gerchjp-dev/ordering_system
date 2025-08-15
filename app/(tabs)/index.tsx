@@ -781,9 +781,6 @@ export default function TablesScreen() {
                   <Settings size={24} color="#8B4513" />
                   <Text style={styles.hamburgerItemText}>設定</Text>
                 </TouchableOpacity>
-              </View>
-              
-              <Text style={styles.tableNumber}>{table.number}</Text>
               <Text style={styles.tableSeats}>{table.seats}席</Text>
               <Text style={[styles.tableStatus, { color: getStatusColor(table.status) }]}>
                 {getStatusText(table.status)}
