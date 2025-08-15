@@ -93,7 +93,7 @@ const menuItems: MenuItem[] = [
 
 export default function OrderScreen() {
   const { database, isConnected } = useDatabase();
-  const [confirmedOrders, setConfirmedOrders] = useState<CartItem[]>([]); // 確定済み注文
+  const [confirmedOrders, setConfirmedOrders] = useState<CartItem[]>([]); // 注文履歴
   const [pendingOrders, setPendingOrders] = useState<CartItem[]>([]); // 追加注文（未確定）
   const [showTableSelector, setShowTableSelector] = useState(false);
   const [availableTables, setAvailableTables] = useState<any[]>([]);
@@ -131,7 +131,7 @@ export default function OrderScreen() {
   // データベース接続時はDBのメニューを使用、そうでなければモックデータ
   const currentMenuItems = isConnected && dbMenuItems.length > 0 ? dbMenuItems : menuItems;
 
-  // テーブルの既存注文を読み込み（確定済み注文として表示）
+  // テーブルの既存注文を読み込み（注文履歴として表示）
   useEffect(() => {
     if (currentTableId && (global as any).getTableOrders) {
       const existingOrders = (global as any).getTableOrders(currentTableId);
@@ -206,7 +206,7 @@ export default function OrderScreen() {
             try {
               console.log('📝 追加注文確定処理開始...');
               
-              // 確定済み注文に追加
+              // 注文履歴に追加
               const updatedConfirmedOrders = [...confirmedOrders];
               
               // 既存の注文と統合
@@ -307,7 +307,7 @@ export default function OrderScreen() {
       </View>
 
       <ScrollView style={styles.content}>
-        {/* 確定済み注文履歴 */}
+        {/* 注文履歴 */}
         {confirmedOrders.length > 0 && (
           <View style={styles.confirmedOrdersSection}>
             <View style={styles.sectionHeader}>

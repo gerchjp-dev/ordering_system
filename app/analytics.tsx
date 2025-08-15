@@ -7,7 +7,8 @@ import {
   TouchableOpacity,
   Dimensions,
 } from 'react-native';
-import { Calendar, TrendingUp, DollarSign, ShoppingBag } from 'lucide-react-native';
+import { Calendar, TrendingUp, DollarSign, ShoppingBag, ArrowLeft } from 'lucide-react-native';
+import { useRouter } from 'expo-router';
 
 const { width } = Dimensions.get('window');
 
@@ -38,6 +39,7 @@ const monthlyData = [
 
 export default function AnalyticsScreen() {
   const [selectedPeriod, setSelectedPeriod] = useState<'daily' | 'monthly' | 'yearly'>('daily');
+  const router = useRouter();
 
   const getCurrentData = () => {
     switch (selectedPeriod) {
@@ -105,6 +107,12 @@ export default function AnalyticsScreen() {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
+        <TouchableOpacity
+          style={styles.backButton}
+          onPress={() => router.back()}
+        >
+          <ArrowLeft size={24} color="#FFFFFF" />
+        </TouchableOpacity>
         <Text style={styles.headerTitle}>売上分析</Text>
         <Calendar size={24} color="#FFFFFF" />
       </View>
@@ -220,6 +228,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     flexDirection: 'row',
     justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  backButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    justifyContent: 'center',
     alignItems: 'center',
   },
   headerTitle: {

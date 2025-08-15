@@ -7,8 +7,9 @@ import {
   TouchableOpacity,
   Alert,
 } from 'react-native';
-import { Clock, Receipt, Trash2, RefreshCw } from 'lucide-react-native';
+import { Clock, Receipt, Trash2, RefreshCw, ArrowLeft } from 'lucide-react-native';
 import { useDatabase } from '@/hooks/useDatabase';
+import { useRouter } from 'expo-router';
 
 interface OrderHistoryItem {
   id: string;
@@ -59,6 +60,7 @@ export default function OrderHistoryScreen() {
   const { database, isConnected } = useDatabase();
   const [orderHistory, setOrderHistory] = useState<OrderHistoryItem[]>(mockOrderHistory);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const router = useRouter();
 
   // データベースから注文履歴を読み込み
   const loadOrderHistory = async () => {
@@ -139,6 +141,12 @@ export default function OrderHistoryScreen() {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
+        <TouchableOpacity
+          style={styles.backButton}
+          onPress={() => router.back()}
+        >
+          <ArrowLeft size={24} color="#FFFFFF" />
+        </TouchableOpacity>
         <Text style={styles.headerTitle}>注文履歴</Text>
         <View style={styles.headerActions}>
           <TouchableOpacity
@@ -218,6 +226,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     flexDirection: 'row',
     justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  backButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    justifyContent: 'center',
     alignItems: 'center',
   },
   headerTitle: {

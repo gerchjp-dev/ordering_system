@@ -387,6 +387,12 @@ export default function MenuScreen() {
     return (
       <View style={styles.container}>
         <View style={styles.header}>
+          <TouchableOpacity
+            style={styles.backButton}
+            onPress={() => router.back()}
+          >
+            <ArrowLeft size={24} color="#FFFFFF" />
+          </TouchableOpacity>
           <Text style={styles.headerTitle}>メニュー管理</Text>
           <View style={styles.headerActions}>
             <TouchableOpacity
