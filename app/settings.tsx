@@ -10,9 +10,10 @@ import {
   Modal,
   TextInput,
 } from 'react-native';
-import { User, Bell, Shield, CircleHelp as HelpCircle, LogOut, Store, Printer, Wifi, CreditCard, Coffee, Plus, CreditCard as Edit, Trash2, Save, X, ArrowUp, ArrowDown, Database, Key, CircleCheck as CheckCircle, CircleAlert as AlertCircle } from 'lucide-react-native';
+import { User, Bell, Shield, CircleHelp as HelpCircle, LogOut, Store, Printer, Wifi, CreditCard, Coffee, Plus, CreditCard as Edit, Trash2, Save, X, ArrowUp, ArrowDown, Database, Key, CircleCheck as CheckCircle, CircleAlert as AlertCircle, ArrowLeft } from 'lucide-react-native';
 import { initializeSupabase, clearSupabaseConfig, loadSupabaseConfig, isSupabaseConfigured } from '@/lib/supabase';
 import { useDatabase } from '@/hooks/useDatabase';
+import { useRouter } from 'expo-router';
 
 interface MenuItem {
   id: string;
@@ -83,6 +84,7 @@ const initialMenuItems: MenuItem[] = [
 ];
 
 export default function SettingsScreen() {
+  const router = useRouter();
   const [notifications, setNotifications] = useState(true);
   const [receiptPrinting, setReceiptPrinting] = useState(true);
   const [soundEffects, setSoundEffects] = useState(true);
@@ -408,7 +410,14 @@ export default function SettingsScreen() {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
+        <TouchableOpacity
+          style={styles.backButton}
+          onPress={() => router.back()}
+        >
+          <ArrowLeft size={24} color="#FFFFFF" />
+        </TouchableOpacity>
         <Text style={styles.headerTitle}>設定</Text>
+        <View style={styles.placeholder} />
       </View>
 
       <ScrollView style={styles.content}>
@@ -940,12 +949,25 @@ const styles = StyleSheet.create({
     paddingTop: 40,
     paddingBottom: 15,
     paddingHorizontal: 20,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  backButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   headerTitle: {
     fontSize: 24,
     fontWeight: 'bold',
     color: '#FFFFFF',
-    textAlign: 'center',
+  },
+  placeholder: {
+    width: 40,
   },
   content: {
     flex: 1,

@@ -9,7 +9,7 @@ import {
   Modal,
   TextInput,
 } from 'react-native';
-import { Plus, Users, Clock, CircleCheck as CheckCircle, Circle as XCircle, CreditCard as Edit, Trash2, Menu, UtensilsCrossed, ClipboardList, TrendingUp, X } from 'lucide-react-native';
+import { Plus, Users, Clock, CircleCheck as CheckCircle, Circle as XCircle, CreditCard as Edit, Trash2, Menu, UtensilsCrossed, ClipboardList, TrendingUp, X, Settings } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import { useDatabase } from '@/hooks/useDatabase';
 import { Table as DBTable } from '@/lib/database';
@@ -54,6 +54,7 @@ export default function TablesScreen() {
   const { database, isLoading, error, isConnected } = useDatabase();
   const [tables, setTables] = useState<Table[]>(initialTables);
   const [isUsingMockData, setIsUsingMockData] = useState(true);
+  const [selectedFilter, setSelectedFilter] = useState<'all' | 'available' | 'occupied' | 'reserved' | 'cleaning'>('all');
   const [showAddModal, setShowAddModal] = useState(false);
   const [newTableNumber, setNewTableNumber] = useState('');
   const [newTableSeats, setNewTableSeats] = useState('');
@@ -617,6 +618,20 @@ export default function TablesScreen() {
 
   const stats = getStatusStats();
 
+  // フィルタリングされたテーブル一覧を取得
+  const getFilteredTables = () => {
+    if (selectedFilter === 'all') {
+      return tables;
+    }
+    
+    const filtered = tables.filter(table => table.status === selectedFilter);
+    const others = tables.filter(table => table.status !== selectedFilter);
+    
+    return [...filtered, ...others];
+  };
+
+  const filteredTables = getFilteredTables();
+
   // テーブルの注文を更新する関数をグローバルに公開
   React.useEffect(() => {
     (global as any).updateTableStatus = async (tableId: string, status: string, additionalUpdates?: any) => {
@@ -665,7 +680,7 @@ export default function TablesScreen() {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>テーブル管理</Text>
+        <Text style={styles.headerTitle}>茶茶日和</Text>
         <View style={styles.headerInfo}>
           <Text style={styles.connectionText}>
             {isConnected ? '🟢 DB接続' : '🔴 ローカル'}
@@ -691,32 +706,61 @@ export default function TablesScreen() {
       </View>
 
       <View style={styles.statsContainer}>
-        <View style={styles.statItem}>
+        <TouchableOpacity 
+          style={[styles.statItem, selectedFilter === 'available' && styles.statItemActive]}
+          onPress={() => setSelectedFilter(selectedFilter === 'available' ? 'all' : 'available')}
+        >
           <Text style={[styles.statNumber, { color: '#10B981' }]}>{stats.available}</Text>
           <Text style={styles.statLabel}>空席</Text>
-        </View>
-        <View style={styles.statItem}>
+        </TouchableOpacity>
+        <TouchableOpacity 
+          style={[styles.statItem, selectedFilter === 'occupied' && styles.statItemActive]}
+          onPress={() => setSelectedFilter(selectedFilter === 'occupied' ? 'all' : 'occupied')}
+        >
           <Text style={[styles.statNumber, { color: '#EF4444' }]}>{stats.occupied}</Text>
           <Text style={styles.statLabel}>使用中</Text>
-        </View>
-        <View style={styles.statItem}>
+        </TouchableOpacity>
+        <TouchableOpacity 
+          style={[styles.statItem, selectedFilter === 'reserved' && styles.statItemActive]}
+          onPress={() => setSelectedFilter(selectedFilter === 'reserved' ? 'all' : 'reserved')}
+        >
           <Text style={[styles.statNumber, { color: '#F59E0B' }]}>{stats.reserved}</Text>
           <Text style={styles.statLabel}>予約済み</Text>
-        </View>
-        <View style={styles.statItem}>
+        </TouchableOpacity>
+        <TouchableOpacity 
+          style={[styles.statItem, selectedFilter === 'cleaning' && styles.statItemActive]}
+          onPress={() => setSelectedFilter(selectedFilter === 'cleaning' ? 'all' : 'cleaning')}
+        >
           <Text style={[styles.statNumber, { color: '#6B7280' }]}>{stats.cleaning}</Text>
           <Text style={styles.statLabel}>清掃中</Text>
-        </View>
+        </TouchableOpacity>
       </View>
+
+      {selectedFilter !== 'all' && (
+        <View style={styles.filterIndicator}>
+          <Text style={styles.filterText}>
+            {selectedFilter === 'available' ? '空席' : 
+             selectedFilter === 'occupied' ? '使用中' : 
+             selectedFilter === 'reserved' ? '予約済み' : '清掃中'}のテーブルを表示中
+          </Text>
+          <TouchableOpacity
+            style={styles.clearFilterButton}
+            onPress={() => setSelectedFilter('all')}
+          >
+            <Text style={styles.clearFilterText}>すべて表示</Text>
+          </TouchableOpacity>
+        </View>
+      )}
 
       <ScrollView style={styles.tablesContainer}>
         <View style={styles.tablesGrid}>
-          {tables.map(table => (
+          {filteredTables.map((table, index) => (
             <TouchableOpacity
               key={table.id}
               style={[
                 styles.tableCard,
-                { borderColor: getStatusColor(table.status) }
+                { borderColor: getStatusColor(table.status) },
+                selectedFilter !== 'all' && table.status === selectedFilter && index < stats[selectedFilter] && styles.priorityCard
               ]}
               onPress={() => handleTablePress(table)}
               onLongPress={() => handleTableLongPress(table)}
@@ -726,6 +770,17 @@ export default function TablesScreen() {
                 {table.status === 'occupied' && <XCircle size={16} color="#FFFFFF" />}
                 {table.status === 'reserved' && <Clock size={16} color="#FFFFFF" />}
                 {table.status === 'cleaning' && <Users size={16} color="#FFFFFF" />}
+                
+                <TouchableOpacity
+                  style={styles.hamburgerItem}
+                  onPress={() => {
+                    setShowHamburgerMenu(false);
+                    router.push('/settings');
+                  }}
+                >
+                  <Settings size={24} color="#8B4513" />
+                  <Text style={styles.hamburgerItemText}>設定</Text>
+                </TouchableOpacity>
               </View>
               
               <Text style={styles.tableNumber}>{table.number}</Text>
@@ -965,6 +1020,11 @@ const styles = StyleSheet.create({
   statItem: {
     flex: 1,
     alignItems: 'center',
+    paddingVertical: 8,
+    borderRadius: 8,
+  },
+  statItemActive: {
+    backgroundColor: '#F5E6D3',
   },
   statNumber: {
     fontSize: 24,
@@ -974,6 +1034,33 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#666666',
     marginTop: 4,
+  },
+  filterIndicator: {
+    backgroundColor: '#FEF3C7',
+    marginHorizontal: 15,
+    marginBottom: 10,
+    paddingHorizontal: 15,
+    paddingVertical: 10,
+    borderRadius: 8,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  filterText: {
+    fontSize: 14,
+    color: '#92400E',
+    fontWeight: '600',
+  },
+  clearFilterButton: {
+    backgroundColor: '#8B4513',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 6,
+  },
+  clearFilterText: {
+    color: '#FFFFFF',
+    fontSize: 12,
+    fontWeight: 'bold',
   },
   tablesContainer: {
     flex: 1,
@@ -997,6 +1084,14 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 3,
     position: 'relative',
+  },
+  priorityCard: {
+    borderWidth: 3,
+    shadowColor: '#8B4513',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 6,
+    elevation: 6,
   },
   statusIndicator: {
     position: 'absolute',
