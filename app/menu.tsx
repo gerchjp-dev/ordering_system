@@ -175,7 +175,6 @@ export default function MenuScreen() {
   const [editingItem, setEditingItem] = useState<MenuItem | null>(null);
   const [showAddMenuModal, setShowAddMenuModal] = useState(false);
   const [unavailableItems, setUnavailableItems] = useState<Set<string>>(new Set());
-  const [unavailableItems, setUnavailableItems] = useState<Set<string>>(new Set());
   const [newMenuItem, setNewMenuItem] = useState({
     name: '',
     price: '',
