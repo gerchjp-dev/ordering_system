@@ -171,6 +171,7 @@ export default function MenuScreen() {
   const [menuItems, setMenuItems] = useState<MenuItem[]>(initialMenuItems);
   const [categories] = useState(['定食', 'ドリンク', 'デザート']);
   const [dailySpecialId, setDailySpecialId] = useState<string>('teishoku-1'); // 日替わり定食のID
+  const [dailySpecialChildId, setDailySpecialChildId] = useState<string>('teishoku-2'); // 日替わり定食の子メニュー（実際の定食）
   const [editingItem, setEditingItem] = useState<MenuItem | null>(null);
   const [showAddMenuModal, setShowAddMenuModal] = useState(false);
   const [newMenuItem, setNewMenuItem] = useState({
