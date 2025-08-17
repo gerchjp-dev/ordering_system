@@ -174,6 +174,7 @@ export default function MenuScreen() {
   const [dailySpecialChildId, setDailySpecialChildId] = useState<string>('teishoku-2'); // 日替わり定食の子メニュー（実際の定食）
   const [editingItem, setEditingItem] = useState<MenuItem | null>(null);
   const [showAddMenuModal, setShowAddMenuModal] = useState(false);
+  const [unavailableItems, setUnavailableItems] = useState<Set<string>>(new Set());
   const [newMenuItem, setNewMenuItem] = useState({
     name: '',
     price: '',
@@ -273,6 +274,12 @@ export default function MenuScreen() {
   }, [tableId, mode]);
 
   const addToCart = (item: MenuItem) => {
+    // 提供不可のメニューは注文できない
+    if (unavailableItems.has(item.id)) {
+      Alert.alert('提供不可', 'このメニューは現在提供しておりません');
+      return;
+    }
+
     setCart(prevCart => {
       const existingItem = prevCart.find(cartItem => cartItem.id === item.id);
       if (existingItem) {
