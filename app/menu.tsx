@@ -183,6 +183,19 @@ export default function MenuScreen() {
     image: 'https://images.pexels.com/photos/312418/pexels-photo-312418.jpeg?auto=compress&cs=tinysrgb&w=300',
   });
 
+  // 提供状況を切り替える関数
+  const toggleAvailability = (itemId: string) => {
+    setUnavailableItems(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(itemId)) {
+        newSet.delete(itemId);
+      } else {
+        newSet.add(itemId);
+      }
+      return newSet;
+    });
+  };
+
   // データベースからメニューを読み込み
   const loadMenuItems = async () => {
     if (!database) return;
@@ -253,6 +266,34 @@ export default function MenuScreen() {
     }
   };
 
+  const deleteMenuItem = (id: string) => {
+    Alert.alert(
+      '削除確認',
+      'このメニュー項目を削除しますか？',
+      [
+        { text: 'キャンセル', style: 'cancel' },
+        {
+          text: '削除',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              if (database && isConnected) {
+                // データベースから削除（実装時）
+                console.log('データベースからメニュー削除:', id);
+              }
+              // ローカル状態から削除
+              setMenuItems(prevItems => prevItems.filter(item => item.id !== id));
+              Alert.alert('成功', 'メニュー項目が削除されました');
+            } catch (error) {
+              console.error('メニュー削除エラー:', error);
+              Alert.alert('エラー', 'メニューの削除に失敗しました');
+            }
+          },
+        },
+      ]
+    );
+  };
+
   // テーブルの既存注文を読み込み
   React.useEffect(() => {
     if (tableId && (global as any).getTableOrders) {
@@ -274,12 +315,6 @@ export default function MenuScreen() {
   }, [tableId, mode]);
 
   const addToCart = (item: MenuItem) => {
-    // 提供不可のメニューは注文できない
-    if (unavailableItems.has(item.id)) {
-      Alert.alert('提供不可', 'このメニューは現在提供しておりません');
-      return;
-    }
-
     // 提供不可のメニューは注文できない
     if (unavailableItems.has(item.id)) {
       Alert.alert('提供不可', 'このメニューは現在提供しておりません');
@@ -523,12 +558,46 @@ export default function MenuScreen() {
             <View key={category} style={styles.categorySection}>
               <Text style={styles.categoryTitle}>{category}</Text>
               {groupedItems[category].map(item => (
-                <View key={item.id} style={styles.menuItem}>
+                <View key={item.id} style={[
+                  styles.menuItem,
+                  unavailableItems.has(item.id) && styles.menuItemUnavailable
+                ]}>
                   <Image source={{ uri: item.image }} style={styles.menuImage} />
                   <View style={styles.menuInfo}>
                     <Text style={styles.menuName}>{item.name}</Text>
                     <Text style={styles.menuDescription}>{item.description}</Text>
                     <Text style={styles.menuPrice}>¥{item.price}</Text>
+                    {unavailableItems.has(item.id) && (
+                      <Text style={styles.unavailableText}>提供停止中</Text>
+                    )}
+                  </View>
+                  <View style={styles.menuActions}>
+                    <TouchableOpacity
+                      style={[
+                        styles.availabilityButton,
+                        unavailableItems.has(item.id) ? styles.unavailableButton : styles.availableButton
+                      ]}
+                      onPress={() => toggleAvailability(item.id)}
+                    >
+                      <Text style={[
+                        styles.availabilityButtonText,
+                        unavailableItems.has(item.id) ? styles.unavailableButtonText : styles.availableButtonText
+                      ]}>
+                        {unavailableItems.has(item.id) ? '提供停止' : '提供中'}
+                      </Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={styles.editMenuButton}
+                      onPress={() => setEditingItem(item)}
+                    >
+                      <Text style={styles.editMenuButtonText}>編集</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={styles.deleteMenuButton}
+                      onPress={() => deleteMenuItem(item.id)}
+                    >
+                      <Text style={styles.deleteMenuButtonText}>削除</Text>
+                    </TouchableOpacity>
                   </View>
                 </View>
               ))}
@@ -664,18 +733,31 @@ export default function MenuScreen() {
                 key={item.id}
                 style={styles.menuItem}
                 onPress={() => addToCart(item)}
+                disabled={unavailableItems.has(item.id)}
               >
                 <Image source={{ uri: item.image }} style={styles.menuImage} />
                 <View style={styles.menuInfo}>
                   <Text style={styles.menuName}>{item.name}</Text>
                   <Text style={styles.menuDescription}>{item.description}</Text>
                   <Text style={styles.menuPrice}>¥{item.price}</Text>
+                  {unavailableItems.has(item.id) && (
+                    <Text style={styles.unavailableText}>提供停止中</Text>
+                  )}
                 </View>
                 <TouchableOpacity
-                  style={styles.addButton}
+                  style={[
+                    styles.addButton,
+                    unavailableItems.has(item.id) && styles.addButtonDisabled
+                  ]}
                   onPress={() => addToCart(item)}
+                  disabled={unavailableItems.has(item.id)}
                 >
-                  <Text style={styles.addButtonText}>+</Text>
+                  <Text style={[
+                    styles.addButtonText,
+                    unavailableItems.has(item.id) && styles.addButtonTextDisabled
+                  ]}>
+                    {unavailableItems.has(item.id) ? '×' : '+'}
+                  </Text>
                 </TouchableOpacity>
               </TouchableOpacity>
             ))}
@@ -841,6 +923,10 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 3,
   },
+  menuItemUnavailable: {
+    opacity: 0.6,
+    backgroundColor: '#F5F5F5',
+  },
   addButton: {
     backgroundColor: '#8B4513',
     width: 40,
@@ -878,6 +964,68 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#8B4513',
     marginTop: 4,
+  },
+  unavailableText: {
+    fontSize: 12,
+    color: '#EF4444',
+    fontWeight: 'bold',
+    marginTop: 2,
+  },
+  menuActions: {
+    flexDirection: 'column',
+    gap: 8,
+    alignItems: 'flex-end',
+    minWidth: 80,
+  },
+  availabilityButton: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 4,
+    minWidth: 60,
+    marginBottom: 4,
+  },
+  availableButton: {
+    backgroundColor: '#10B981',
+  },
+  unavailableButton: {
+    backgroundColor: '#EF4444',
+  },
+  availabilityButtonText: {
+    fontSize: 10,
+    fontWeight: 'bold',
+    textAlign: 'center',
+  },
+  availableButtonText: {
+    color: '#FFFFFF',
+  },
+  unavailableButtonText: {
+    color: '#FFFFFF',
+  },
+  editMenuButton: {
+    backgroundColor: '#8B4513',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 6,
+    minWidth: 60,
+  },
+  editMenuButtonText: {
+    color: '#FFFFFF',
+    fontSize: 12,
+    fontWeight: 'bold',
+    textAlign: 'center',
+  },
+  deleteMenuButton: {
+    backgroundColor: '#EF4444',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 6,
+    minWidth: 60,
+  },
+  deleteMenuButtonText: {
+    color: '#FFFFFF',
+    fontSize: 12,
+    fontWeight: 'bold',
+    textAlign: 'center',
   },
   cartPreview: {
     backgroundColor: '#FFFFFF',
@@ -1235,5 +1383,8 @@ const styles = StyleSheet.create({
   },
   addButtonTextDisabled: {
     color: '#666666',
+  },
+  deleteMenuItem: {
+    // この関数を追加
   },
 });
