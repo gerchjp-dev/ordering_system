@@ -1320,4 +1320,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#FEF2F2',
     borderColor: '#FECACA',
   },
+  deleteButtonText: {
+    color: '#DC2626',
+  },
 });
