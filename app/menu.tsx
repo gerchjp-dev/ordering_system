@@ -134,6 +134,88 @@ export default function MenuScreen() {
     image: 'https://images.pexels.com/photos/312418/pexels-photo-312418.jpeg?auto=compress&cs=tinysrgb&w=300',
   });
 
+  // 画像選択機能
+  const pickImage = async (isEditing: boolean = false) => {
+    try {
+      // カメラロールの権限をリクエスト
+      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (status !== 'granted') {
+        Alert.alert('権限が必要です', 'カメラロールへのアクセス権限が必要です');
+        return;
+      }
+
+      // 画像選択オプション
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        aspect: [4, 3],
+        quality: 0.8,
+        base64: true,
+      });
+
+      if (!result.canceled && result.assets[0]) {
+        const imageUri = result.assets[0].uri;
+        console.log('📷 画像選択完了:', imageUri);
+        
+        if (isEditing && editingItem) {
+          setEditingItem({...editingItem, image: imageUri});
+        } else {
+          setNewMenuItem({...newMenuItem, image: imageUri});
+        }
+      }
+    } catch (error) {
+      console.error('画像選択エラー:', error);
+      Alert.alert('エラー', '画像の選択に失敗しました');
+    }
+  };
+
+  // カメラで撮影
+  const takePhoto = async (isEditing: boolean = false) => {
+    try {
+      // カメラの権限をリクエスト
+      const { status } = await ImagePicker.requestCameraPermissionsAsync();
+      if (status !== 'granted') {
+        Alert.alert('権限が必要です', 'カメラへのアクセス権限が必要です');
+        return;
+      }
+
+      // カメラで撮影
+      const result = await ImagePicker.launchCameraAsync({
+        allowsEditing: true,
+        aspect: [4, 3],
+        quality: 0.8,
+        base64: true,
+      });
+
+      if (!result.canceled && result.assets[0]) {
+        const imageUri = result.assets[0].uri;
+        console.log('📸 写真撮影完了:', imageUri);
+        
+        if (isEditing && editingItem) {
+          setEditingItem({...editingItem, image: imageUri});
+        } else {
+          setNewMenuItem({...newMenuItem, image: imageUri});
+        }
+      }
+    } catch (error) {
+      console.error('写真撮影エラー:', error);
+      Alert.alert('エラー', '写真の撮影に失敗しました');
+    }
+  };
+
+  // 画像選択オプションを表示
+  const showImageOptions = (isEditing: boolean = false) => {
+    Alert.alert(
+      '画像を選択',
+      '画像の取得方法を選択してください',
+      [
+        { text: 'キャンセル', style: 'cancel' },
+        { text: 'カメラで撮影', onPress: () => takePhoto(isEditing) },
+        { text: 'ギャラリーから選択', onPress: () => pickImage(isEditing) },
+      ]
+    );
+  };
+
   // グローバル状態から最新データを読み込み
   const loadFromGlobalState = () => {
     console.log('📱 グローバル状態から読み込み開始');
@@ -705,12 +787,33 @@ export default function MenuScreen() {
                     value={editingItem.description}
                     onChangeText={(text) => setEditingItem({...editingItem, description: text})}
                   />
-                  <TextInput
-                    style={styles.input}
-                    placeholder="画像URL"
-                    value={editingItem.image}
-                    onChangeText={(text) => setEditingItem({...editingItem, image: text})}
-                  />
+                  <View style={styles.imageSection}>
+                    <Text style={styles.inputLabel}>商品画像</Text>
+                    <View style={styles.imagePreviewContainer}>
+                      <Image 
+                        source={{ uri: editingItem.image }} 
+                        style={styles.imagePreview}
+                        onError={() => {
+                          console.log('画像読み込みエラー:', editingItem.image);
+                        }}
+                      />
+                      <View style={styles.imageButtons}>
+                        <TouchableOpacity
+                          style={styles.imageButton}
+                          onPress={() => showImageOptions(true)}
+                        >
+                          <Camera size={16} color="#FFFFFF" />
+                          <Text style={styles.imageButtonText}>画像変更</Text>
+                        </TouchableOpacity>
+                      </View>
+                    </View>
+                    <TextInput
+                      style={[styles.input, styles.urlInput]}
+                      placeholder="または画像URLを入力"
+                      value={editingItem.image}
+                      onChangeText={(text) => setEditingItem({...editingItem, image: text})}
+                    />
+                  </View>
                 </ScrollView>
               )}
               
@@ -1310,5 +1413,49 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontWeight: 'bold',
     marginLeft: 6,
+  },
+  imageSection: {
+    marginBottom: 15,
+  },
+  inputLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#333333',
+    marginBottom: 8,
+  },
+  imagePreviewContainer: {
+    backgroundColor: '#F5E6D3',
+    borderRadius: 8,
+    padding: 10,
+    marginBottom: 10,
+  },
+  imagePreview: {
+    width: '100%',
+    height: 120,
+    borderRadius: 6,
+    backgroundColor: '#E0E0E0',
+    marginBottom: 10,
+  },
+  imageButtons: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+  },
+  imageButton: {
+    backgroundColor: '#8B4513',
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 6,
+  },
+  imageButtonText: {
+    color: '#FFFFFF',
+    fontSize: 12,
+    fontWeight: 'bold',
+    marginLeft: 6,
+  },
+  urlInput: {
+    fontSize: 12,
+    color: '#666666',
   },
 });
