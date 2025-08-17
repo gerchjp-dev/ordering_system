@@ -663,6 +663,9 @@ export default function MenuScreen() {
                 <View style={styles.menuInfo}>
                   <Text style={styles.menuName}>{item.name}</Text>
                   <Text style={styles.menuDescription}>{item.description}</Text>
+                  {unavailableItems.has(item.id) && (
+                    <Text style={styles.unavailableText}>提供停止中</Text>
+                  )}
                   <Text style={styles.menuPrice}>¥{item.price}</Text>
                 </View>
                 <TouchableOpacity
