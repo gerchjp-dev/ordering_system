@@ -663,9 +663,6 @@ export default function MenuScreen() {
                 <View style={styles.menuInfo}>
                   <Text style={styles.menuName}>{item.name}</Text>
                   <Text style={styles.menuDescription}>{item.description}</Text>
-                  {unavailableItems.has(item.id) && (
-                    <Text style={styles.unavailableText}>提供停止中</Text>
-                  )}
                   <Text style={styles.menuPrice}>¥{item.price}</Text>
                 </View>
                 <TouchableOpacity
@@ -1127,5 +1124,45 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 10,
     fontWeight: 'bold',
+  },
+  availabilityButton: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 4,
+    minWidth: 60,
+    marginBottom: 4,
+  },
+  availableButton: {
+    backgroundColor: '#10B981',
+  },
+  unavailableButton: {
+    backgroundColor: '#EF4444',
+  },
+  availabilityButtonText: {
+    fontSize: 10,
+    fontWeight: 'bold',
+    textAlign: 'center',
+  },
+  availableButtonText: {
+    color: '#FFFFFF',
+  },
+  unavailableButtonText: {
+    color: '#FFFFFF',
+  },
+  unavailableText: {
+    fontSize: 12,
+    color: '#EF4444',
+    fontWeight: 'bold',
+    marginTop: 2,
+  },
+  menuItemUnavailable: {
+    opacity: 0.6,
+    backgroundColor: '#F5F5F5',
+  },
+  addButtonDisabled: {
+    backgroundColor: '#CCCCCC',
+  },
+  addButtonTextDisabled: {
+    color: '#666666',
   },
 });
