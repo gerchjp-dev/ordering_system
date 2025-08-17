@@ -163,18 +163,33 @@ const initialMenuItems: MenuItem[] = [
   },
 ];
 
+// グローバル状態管理
+if (typeof global !== 'undefined') {
+  if (!(global as any).globalMenuItems) {
+    (global as any).globalMenuItems = initialMenuItems;
+  }
+  if (!(global as any).globalUnavailableItems) {
+    (global as any).globalUnavailableItems = new Set<string>();
+  }
+}
+
 export default function MenuScreen() {
   const { database, isConnected } = useDatabase();
   const router = useRouter();
   const { tableId, tableNumber, mode } = useLocalSearchParams();
   const [cart, setCart] = useState<any[]>([]);
-  const [menuItems, setMenuItems] = useState<MenuItem[]>(initialMenuItems);
+  const [menuItems, setMenuItems] = useState<MenuItem[]>(() => {
+    return (global as any).globalMenuItems || initialMenuItems;
+  });
   const [categories] = useState(['定食', 'ドリンク', 'デザート']);
   const [dailySpecialId, setDailySpecialId] = useState<string>('teishoku-1'); // 日替わり定食のID
   const [dailySpecialChildId, setDailySpecialChildId] = useState<string>('teishoku-2'); // 日替わり定食の子メニュー（実際の定食）
   const [editingItem, setEditingItem] = useState<MenuItem | null>(null);
   const [showAddMenuModal, setShowAddMenuModal] = useState(false);
-  const [unavailableItems, setUnavailableItems] = useState<Set<string>>(new Set());
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [unavailableItems, setUnavailableItems] = useState<Set<string>>(() => {
+    return (global as any).globalUnavailableItems || new Set<string>();
+  });
   const [newMenuItem, setNewMenuItem] = useState({
     name: '',
     price: '',
@@ -192,8 +207,59 @@ export default function MenuScreen() {
       } else {
         newSet.add(itemId);
       }
+      // グローバル状態も更新
+      (global as any).globalUnavailableItems = newSet;
       return newSet;
     });
+  };
+
+  // メニュー項目を更新する関数
+  const updateMenuItem = () => {
+    if (!editingItem || !editingItem.name.trim() || !editingItem.price) {
+      Alert.alert('エラー', '商品名と価格を入力してください');
+      return;
+    }
+
+    const updatedMenuItems = menuItems.map(item =>
+      item.id === editingItem.id ? editingItem : item
+    );
+    
+    setMenuItems(updatedMenuItems);
+    // グローバル状態も更新
+    (global as any).globalMenuItems = updatedMenuItems;
+    
+    setEditingItem(null);
+    setShowEditModal(false);
+    Alert.alert('成功', 'メニュー項目が更新されました');
+  };
+
+  // メニュー項目を削除する関数
+  const deleteMenuItem = (id: string) => {
+    Alert.alert(
+      '削除確認',
+      'このメニュー項目を削除しますか？',
+      [
+        { text: 'キャンセル', style: 'cancel' },
+        {
+          text: '削除',
+          style: 'destructive',
+          onPress: () => {
+            const updatedMenuItems = menuItems.filter(item => item.id !== id);
+            setMenuItems(updatedMenuItems);
+            // グローバル状態も更新
+            (global as any).globalMenuItems = updatedMenuItems;
+            
+            // 提供停止リストからも削除
+            const newUnavailableItems = new Set(unavailableItems);
+            newUnavailableItems.delete(id);
+            setUnavailableItems(newUnavailableItems);
+            (global as any).globalUnavailableItems = newUnavailableItems;
+            
+            Alert.alert('成功', 'メニュー項目が削除されました');
+          },
+        },
+      ]
+    );
   };
 
   // データベースからメニューを読み込み
@@ -211,6 +277,8 @@ export default function MenuScreen() {
         description: item.description || '',
       }));
       setMenuItems(formattedItems);
+      // グローバル状態も更新
+      (global as any).globalMenuItems = formattedItems;
     } catch (error) {
       console.error('メニュー読み込みエラー:', error);
     }
@@ -219,6 +287,16 @@ export default function MenuScreen() {
   React.useEffect(() => {
     if (database) {
       loadMenuItems();
+    } else {
+      // データベース未接続時はグローバル状態から読み込み
+      const globalMenuItems = (global as any).globalMenuItems;
+      const globalUnavailableItems = (global as any).globalUnavailableItems;
+      if (globalMenuItems) {
+        setMenuItems(globalMenuItems);
+      }
+      if (globalUnavailableItems) {
+        setUnavailableItems(globalUnavailableItems);
+      }
     }
   }, [database]);
 
@@ -248,7 +326,10 @@ export default function MenuScreen() {
         });
         await loadMenuItems(); // データベースから再読み込み
       } else {
-        setMenuItems(prev => [...prev, item]);
+        const updatedMenuItems = [...menuItems, item];
+        setMenuItems(updatedMenuItems);
+        // グローバル状態も更新
+        (global as any).globalMenuItems = updatedMenuItems;
       }
 
       setNewMenuItem({
@@ -264,34 +345,6 @@ export default function MenuScreen() {
       console.error('メニュー追加エラー:', error);
       Alert.alert('エラー', 'メニューの追加に失敗しました');
     }
-  };
-
-  const deleteMenuItem = (id: string) => {
-    Alert.alert(
-      '削除確認',
-      'このメニュー項目を削除しますか？',
-      [
-        { text: 'キャンセル', style: 'cancel' },
-        {
-          text: '削除',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              if (database && isConnected) {
-                // データベースから削除（実装時）
-                console.log('データベースからメニュー削除:', id);
-              }
-              // ローカル状態から削除
-              setMenuItems(prevItems => prevItems.filter(item => item.id !== id));
-              Alert.alert('成功', 'メニュー項目が削除されました');
-            } catch (error) {
-              console.error('メニュー削除エラー:', error);
-              Alert.alert('エラー', 'メニューの削除に失敗しました');
-            }
-          },
-        },
-      ]
-    );
   };
 
   // テーブルの既存注文を読み込み
@@ -686,6 +739,88 @@ export default function MenuScreen() {
             </View>
           </View>
         </Modal>
+
+        {/* メニュー項目編集モーダル */}
+        <Modal
+          visible={showEditModal}
+          transparent={true}
+          animationType="slide"
+          onRequestClose={() => setShowEditModal(false)}
+        >
+          <View style={styles.modalOverlay}>
+            <View style={styles.modalContent}>
+              <Text style={styles.modalTitle}>メニュー項目を編集</Text>
+              {editingItem && (
+                <>
+                  <TextInput
+                    style={styles.input}
+                    placeholder="商品名"
+                    value={editingItem.name}
+                    onChangeText={(text) => setEditingItem({...editingItem, name: text})}
+                  />
+                  <TextInput
+                    style={styles.input}
+                    placeholder="価格"
+                    keyboardType="numeric"
+                    value={editingItem.price.toString()}
+                    onChangeText={(text) => setEditingItem({...editingItem, price: parseInt(text) || 0})}
+                  />
+                  <View style={styles.pickerContainer}>
+                    <Text style={styles.pickerLabel}>カテゴリ:</Text>
+                    <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.categoryPicker}>
+                      {categories.map((category) => (
+                        <TouchableOpacity
+                          key={category}
+                          style={[
+                            styles.categoryOption,
+                            editingItem.category === category && styles.categoryOptionSelected
+                          ]}
+                          onPress={() => setEditingItem({...editingItem, category})}
+                        >
+                          <Text style={[
+                            styles.categoryOptionText,
+                            editingItem.category === category && styles.categoryOptionTextSelected
+                          ]}>
+                            {category}
+                          </Text>
+                        </TouchableOpacity>
+                      ))}
+                    </ScrollView>
+                  </View>
+                  <TextInput
+                    style={styles.input}
+                    placeholder="説明"
+                    value={editingItem.description}
+                    onChangeText={(text) => setEditingItem({...editingItem, description: text})}
+                  />
+                  <TextInput
+                    style={styles.input}
+                    placeholder="画像URL"
+                    value={editingItem.image}
+                    onChangeText={(text) => setEditingItem({...editingItem, image: text})}
+                  />
+                  <View style={styles.modalButtons}>
+                    <TouchableOpacity
+                      style={styles.cancelButton}
+                      onPress={() => {
+                        setShowEditModal(false);
+                        setEditingItem(null);
+                      }}
+                    >
+                      <Text style={styles.cancelButtonText}>キャンセル</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={styles.saveButton}
+                      onPress={updateMenuItem}
+                    >
+                      <Text style={styles.saveButtonText}>更新</Text>
+                    </TouchableOpacity>
+                  </View>
+                </>
+              )}
+            </View>
+          </View>
+        </Modal>
       </View>
     );
   }
@@ -731,7 +866,10 @@ export default function MenuScreen() {
             {groupedItems[category].map(item => (
               <TouchableOpacity
                 key={item.id}
-                style={styles.menuItem}
+                style={[
+                  styles.menuItem,
+                  unavailableItems.has(item.id) && styles.menuItemUnavailable
+                ]}
                 onPress={() => addToCart(item)}
                 disabled={unavailableItems.has(item.id)}
               >
