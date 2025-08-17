@@ -933,6 +933,7 @@ export default function TablesScreen() {
       </Modal>
     </View>
   );
+}
 
 const styles = StyleSheet.create({
   container: {
