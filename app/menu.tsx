@@ -26,7 +26,63 @@ interface MenuItem {
 
 const initialMenuItems: MenuItem[] = [
   {
-    id: 'mock-menu-1',
+    id: 'teishoku-1',
+    name: '本日の日替わり定食',
+    price: 980,
+    image: 'https://images.pexels.com/photos/1640777/pexels-photo-1640777.jpeg?auto=compress&cs=tinysrgb&w=300',
+    category: '定食',
+    description: '季節の食材を使った栄養バランスの良い定食',
+  },
+  {
+    id: 'teishoku-2',
+    name: '鶏の唐揚げ定食',
+    price: 850,
+    image: 'https://images.pexels.com/photos/2338407/pexels-photo-2338407.jpeg?auto=compress&cs=tinysrgb&w=300',
+    category: '定食',
+    description: 'ジューシーな鶏の唐揚げとご飯、味噌汁、小鉢のセット',
+  },
+  {
+    id: 'teishoku-3',
+    name: '焼き魚定食',
+    price: 920,
+    image: 'https://images.pexels.com/photos/1640777/pexels-photo-1640777.jpeg?auto=compress&cs=tinysrgb&w=300',
+    category: '定食',
+    description: '新鮮な魚の塩焼きとご飯、味噌汁、小鉢のセット',
+  },
+  {
+    id: 'teishoku-4',
+    name: '豚の生姜焼き定食',
+    price: 890,
+    image: 'https://images.pexels.com/photos/1640777/pexels-photo-1640777.jpeg?auto=compress&cs=tinysrgb&w=300',
+    category: '定食',
+    description: '甘辛い生姜焼きとご飯、味噌汁、小鉢のセット',
+  },
+  {
+    id: 'teishoku-5',
+    name: 'ハンバーグ定食',
+    price: 950,
+    image: 'https://images.pexels.com/photos/1640777/pexels-photo-1640777.jpeg?auto=compress&cs=tinysrgb&w=300',
+    category: '定食',
+    description: 'ジューシーなハンバーグとご飯、味噌汁、小鉢のセット',
+  },
+  {
+    id: 'teishoku-6',
+    name: '天ぷら定食',
+    price: 1080,
+    image: 'https://images.pexels.com/photos/1640777/pexels-photo-1640777.jpeg?auto=compress&cs=tinysrgb&w=300',
+    category: '定食',
+    description: 'サクサクの天ぷらとご飯、味噌汁、小鉢のセット',
+  },
+  {
+    id: 'teishoku-7',
+    name: 'カツ定食',
+    price: 980,
+    image: 'https://images.pexels.com/photos/1640777/pexels-photo-1640777.jpeg?auto=compress&cs=tinysrgb&w=300',
+    category: '定食',
+    description: 'サクサクのとんかつとご飯、味噌汁、小鉢のセット',
+  },
+  {
+    id: 'drink-1',
     name: 'エスプレッソ',
     price: 300,
     image: 'https://images.pexels.com/photos/302899/pexels-photo-302899.jpeg?auto=compress&cs=tinysrgb&w=300',
@@ -34,7 +90,7 @@ const initialMenuItems: MenuItem[] = [
     description: '濃厚なイタリアンエスプレッソ',
   },
   {
-    id: 'mock-menu-2',
+    id: 'drink-2',
     name: 'カプチーノ',
     price: 420,
     image: 'https://images.pexels.com/photos/312418/pexels-photo-312418.jpeg?auto=compress&cs=tinysrgb&w=300',
@@ -42,7 +98,7 @@ const initialMenuItems: MenuItem[] = [
     description: 'ふわふわミルクフォームのカプチーノ',
   },
   {
-    id: 'mock-menu-3',
+    id: 'drink-3',
     name: 'ラテ',
     price: 450,
     image: 'https://images.pexels.com/photos/324028/pexels-photo-324028.jpeg?auto=compress&cs=tinysrgb&w=300',
@@ -50,20 +106,60 @@ const initialMenuItems: MenuItem[] = [
     description: 'なめらかなミルクとエスプレッソのハーモニー',
   },
   {
-    id: 'mock-menu-4',
-    name: 'クロワッサン',
-    price: 280,
-    image: 'https://images.pexels.com/photos/1775043/pexels-photo-1775043.jpeg?auto=compress&cs=tinysrgb&w=300',
-    category: 'フード',
-    description: 'バターたっぷりのサクサククロワッサン',
+    id: 'drink-4',
+    name: '緑茶',
+    price: 200,
+    image: 'https://images.pexels.com/photos/1638280/pexels-photo-1638280.jpeg?auto=compress&cs=tinysrgb&w=300',
+    category: 'ドリンク',
+    description: '香り高い緑茶',
   },
   {
-    id: 'mock-menu-5',
+    id: 'drink-5',
+    name: 'ほうじ茶',
+    price: 200,
+    image: 'https://images.pexels.com/photos/1638280/pexels-photo-1638280.jpeg?auto=compress&cs=tinysrgb&w=300',
+    category: 'ドリンク',
+    description: '香ばしいほうじ茶',
+  },
+  {
+    id: 'drink-6',
+    name: '抹茶',
+    price: 350,
+    image: 'https://images.pexels.com/photos/1638280/pexels-photo-1638280.jpeg?auto=compress&cs=tinysrgb&w=300',
+    category: 'ドリンク',
+    description: '本格的な抹茶',
+  },
+  {
+    id: 'dessert-1',
     name: 'チーズケーキ',
     price: 520,
     image: 'https://images.pexels.com/photos/1126359/pexels-photo-1126359.jpeg?auto=compress&cs=tinysrgb&w=300',
     category: 'デザート',
     description: '濃厚でクリーミーなNYチーズケーキ',
+  },
+  {
+    id: 'dessert-2',
+    name: 'わらび餅',
+    price: 380,
+    image: 'https://images.pexels.com/photos/1126359/pexels-photo-1126359.jpeg?auto=compress&cs=tinysrgb&w=300',
+    category: 'デザート',
+    description: 'なめらかなわらび餅',
+  },
+  {
+    id: 'dessert-3',
+    name: 'みたらし団子',
+    price: 320,
+    image: 'https://images.pexels.com/photos/6880219/pexels-photo-6880219.jpeg?auto=compress&cs=tinysrgb&w=300',
+    category: 'デザート',
+    description: '甘辛いみたらし団子',
+  },
+  {
+    id: 'dessert-4',
+    name: 'あんみつ',
+    price: 450,
+    image: 'https://images.pexels.com/photos/1126359/pexels-photo-1126359.jpeg?auto=compress&cs=tinysrgb&w=300',
+    category: 'デザート',
+    description: '和風あんみつ',
   },
 ];
 
@@ -74,6 +170,8 @@ export default function MenuScreen() {
   const [cart, setCart] = useState<any[]>([]);
   const [menuItems, setMenuItems] = useState<MenuItem[]>(initialMenuItems);
   const [categories] = useState(['定食', 'ドリンク', 'デザート']);
+  const [dailySpecialId, setDailySpecialId] = useState<string>('teishoku-1'); // 日替わり定食のID
+  const [editingItem, setEditingItem] = useState<MenuItem | null>(null);
   const [showAddMenuModal, setShowAddMenuModal] = useState(false);
   const [newMenuItem, setNewMenuItem] = useState({
     name: '',
