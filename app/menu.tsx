@@ -1081,6 +1081,71 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     textAlign: 'center',
   },
+  availabilityButton: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 4,
+    minWidth: 60,
+    marginBottom: 4,
+  },
+  availableButton: {
+    backgroundColor: '#10B981',
+  },
+  unavailableButton: {
+    backgroundColor: '#EF4444',
+  },
+  availabilityButtonText: {
+    fontSize: 10,
+    fontWeight: 'bold',
+    textAlign: 'center',
+  },
+  availableButtonText: {
+    color: '#FFFFFF',
+  },
+  unavailableButtonText: {
+    color: '#FFFFFF',
+  },
+  unavailableText: {
+    fontSize: 12,
+    color: '#EF4444',
+    fontWeight: 'bold',
+    marginTop: 2,
+  },
+  menuItemUnavailable: {
+    opacity: 0.6,
+    backgroundColor: '#F5F5F5',
+  },
+  menuActions: {
+    flexDirection: 'column',
+    gap: 8,
+    alignItems: 'flex-end',
+  },
+  editMenuButton: {
+    backgroundColor: '#8B4513',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 6,
+    minWidth: 60,
+  },
+  editMenuButtonText: {
+    color: '#FFFFFF',
+    fontSize: 12,
+    fontWeight: 'bold',
+    textAlign: 'center',
+  },
+  deleteMenuButton: {
+    backgroundColor: '#EF4444',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 6,
+    minWidth: 60,
+  },
+  deleteMenuButtonText: {
+    color: '#FFFFFF',
+    fontSize: 12,
+    fontWeight: 'bold',
+    textAlign: 'center',
+  },
   dailySpecialButton: {
     backgroundColor: '#F59E0B',
     paddingHorizontal: 8,
