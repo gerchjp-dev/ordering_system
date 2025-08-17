@@ -164,14 +164,20 @@ const initialMenuItems: MenuItem[] = [
 ];
 
 // グローバル状態管理
-if (typeof global !== 'undefined') {
-  if (!(global as any).globalMenuItems) {
-    (global as any).globalMenuItems = initialMenuItems;
+// グローバル状態の初期化
+const initializeGlobalState = () => {
+  if (typeof global !== 'undefined') {
+    if (!(global as any).globalMenuItems) {
+      (global as any).globalMenuItems = [...initialMenuItems];
+    }
+    if (!(global as any).globalUnavailableItems) {
+      (global as any).globalUnavailableItems = new Set<string>();
+    }
   }
-  if (!(global as any).globalUnavailableItems) {
-    (global as any).globalUnavailableItems = new Set<string>();
-  }
-}
+};
+
+// 初期化を実行
+initializeGlobalState();
 
 export default function MenuScreen() {
   const { database, isConnected } = useDatabase();
@@ -179,7 +185,8 @@ export default function MenuScreen() {
   const { tableId, tableNumber, mode } = useLocalSearchParams();
   const [cart, setCart] = useState<any[]>([]);
   const [menuItems, setMenuItems] = useState<MenuItem[]>(() => {
-    return (global as any).globalMenuItems || initialMenuItems;
+    initializeGlobalState();
+    return [...((global as any).globalMenuItems || initialMenuItems)];
   });
   const [categories] = useState(['定食', 'ドリンク', 'デザート']);
   const [dailySpecialId, setDailySpecialId] = useState<string>('teishoku-1'); // 日替わり定食のID
@@ -188,7 +195,8 @@ export default function MenuScreen() {
   const [showAddMenuModal, setShowAddMenuModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [unavailableItems, setUnavailableItems] = useState<Set<string>>(() => {
-    return (global as any).globalUnavailableItems || new Set<string>();
+    initializeGlobalState();
+    return new Set((global as any).globalUnavailableItems || new Set<string>());
   });
   const [newMenuItem, setNewMenuItem] = useState({
     name: '',
@@ -200,15 +208,19 @@ export default function MenuScreen() {
 
   // 提供状況を切り替える関数
   const toggleAvailability = (itemId: string) => {
+    console.log('🔄 提供状況切り替え:', itemId);
     setUnavailableItems(prev => {
       const newSet = new Set(prev);
       if (newSet.has(itemId)) {
         newSet.delete(itemId);
+        console.log('✅ 提供開始:', itemId);
       } else {
         newSet.add(itemId);
+        console.log('❌ 提供停止:', itemId);
       }
       // グローバル状態も更新
       (global as any).globalUnavailableItems = newSet;
+      console.log('🌐 グローバル状態更新:', Array.from(newSet));
       return newSet;
     });
   };
@@ -220,13 +232,15 @@ export default function MenuScreen() {
       return;
     }
 
+    console.log('📝 メニュー項目更新:', editingItem);
     const updatedMenuItems = menuItems.map(item =>
       item.id === editingItem.id ? editingItem : item
     );
     
     setMenuItems(updatedMenuItems);
     // グローバル状態も更新
-    (global as any).globalMenuItems = updatedMenuItems;
+    (global as any).globalMenuItems = [...updatedMenuItems];
+    console.log('🌐 グローバルメニュー更新:', updatedMenuItems.length, '件');
     
     setEditingItem(null);
     setShowEditModal(false);
@@ -235,27 +249,33 @@ export default function MenuScreen() {
 
   // メニュー項目を削除する関数
   const deleteMenuItem = (id: string) => {
+    const itemToDelete = menuItems.find(item => item.id === id);
+    console.log('🗑️ メニュー削除要求:', itemToDelete?.name, id);
+    
     Alert.alert(
       '削除確認',
-      'このメニュー項目を削除しますか？',
+      `「${itemToDelete?.name}」を削除しますか？\n\n削除後は注文できなくなります。`,
       [
         { text: 'キャンセル', style: 'cancel' },
         {
           text: '削除',
           style: 'destructive',
           onPress: () => {
+            console.log('🗑️ メニュー削除実行:', id);
             const updatedMenuItems = menuItems.filter(item => item.id !== id);
             setMenuItems(updatedMenuItems);
             // グローバル状態も更新
-            (global as any).globalMenuItems = updatedMenuItems;
+            (global as any).globalMenuItems = [...updatedMenuItems];
+            console.log('🌐 グローバルメニュー削除後:', updatedMenuItems.length, '件');
             
             // 提供停止リストからも削除
             const newUnavailableItems = new Set(unavailableItems);
             newUnavailableItems.delete(id);
             setUnavailableItems(newUnavailableItems);
             (global as any).globalUnavailableItems = newUnavailableItems;
+            console.log('🌐 提供停止リスト更新:', Array.from(newUnavailableItems));
             
-            Alert.alert('成功', 'メニュー項目が削除されました');
+            Alert.alert('削除完了', `「${itemToDelete?.name}」が削除されました`);
           },
         },
       ]
@@ -267,6 +287,7 @@ export default function MenuScreen() {
     if (!database) return;
     
     try {
+      console.log('💾 データベースからメニュー読み込み開始');
       const dbMenuItems = await database.getMenuItems();
       const formattedItems: MenuItem[] = dbMenuItems.map(item => ({
         id: item.id.toString(),
@@ -278,7 +299,8 @@ export default function MenuScreen() {
       }));
       setMenuItems(formattedItems);
       // グローバル状態も更新
-      (global as any).globalMenuItems = formattedItems;
+      (global as any).globalMenuItems = [...formattedItems];
+      console.log('💾 データベースメニュー読み込み完了:', formattedItems.length, '件');
     } catch (error) {
       console.error('メニュー読み込みエラー:', error);
     }
@@ -289,13 +311,17 @@ export default function MenuScreen() {
       loadMenuItems();
     } else {
       // データベース未接続時はグローバル状態から読み込み
+      console.log('📱 グローバル状態から読み込み開始');
       const globalMenuItems = (global as any).globalMenuItems;
       const globalUnavailableItems = (global as any).globalUnavailableItems;
+      console.log('📱 グローバルメニュー:', globalMenuItems?.length, '件');
+      console.log('📱 提供停止項目:', globalUnavailableItems ? Array.from(globalUnavailableItems) : []);
+      
       if (globalMenuItems) {
-        setMenuItems(globalMenuItems);
+        setMenuItems([...globalMenuItems]);
       }
       if (globalUnavailableItems) {
-        setUnavailableItems(globalUnavailableItems);
+        setUnavailableItems(new Set(globalUnavailableItems));
       }
     }
   }, [database]);
@@ -329,7 +355,8 @@ export default function MenuScreen() {
         const updatedMenuItems = [...menuItems, item];
         setMenuItems(updatedMenuItems);
         // グローバル状態も更新
-        (global as any).globalMenuItems = updatedMenuItems;
+        (global as any).globalMenuItems = [...updatedMenuItems];
+        console.log('🌐 グローバルメニュー追加後:', updatedMenuItems.length, '件');
       }
 
       setNewMenuItem({
@@ -369,11 +396,27 @@ export default function MenuScreen() {
 
   const addToCart = (item: MenuItem) => {
     // 提供不可のメニューは注文できない
+    console.log('🛒 カート追加試行:', item.name, 'ID:', item.id);
+    console.log('🛒 現在の提供停止項目:', Array.from(unavailableItems));
+    console.log('🛒 グローバル提供停止項目:', Array.from((global as any).globalUnavailableItems || new Set()));
+    
+    // グローバル状態も確認
+    const globalUnavailable = (global as any).globalUnavailableItems || new Set();
+    const isUnavailable = unavailableItems.has(item.id) || globalUnavailable.has(item.id);
+    
+    if (isUnavailable) {
+      console.log('❌ 提供停止中のため注文不可:', item.name);
+      Alert.alert('提供不可', `「${item.name}」は現在提供しておりません`);
+      return;
+    }
+    
     if (unavailableItems.has(item.id)) {
-      Alert.alert('提供不可', 'このメニューは現在提供しておりません');
+      console.log('❌ 提供停止中のため注文不可:', item.name);
+      Alert.alert('提供不可', `「${item.name}」は現在提供しておりません`);
       return;
     }
 
+    console.log('✅ カートに追加:', item.name);
     setCart(prevCart => {
       const existingItem = prevCart.find(cartItem => cartItem.id === item.id);
       if (existingItem) {
@@ -859,6 +902,13 @@ export default function MenuScreen() {
         </View>
       </View>
 
+      {/* デバッグ情報表示 */}
+      <View style={styles.debugInfo}>
+        <Text style={styles.debugText}>
+          メニュー: {menuItems.length}件 | 提供停止: {unavailableItems.size}件
+        </Text>
+      </View>
+
       <ScrollView style={styles.menuContent}>
         {categories.map(category => (
           <View key={category} style={styles.categorySection}>
@@ -868,33 +918,33 @@ export default function MenuScreen() {
                 key={item.id}
                 style={[
                   styles.menuItem,
-                  unavailableItems.has(item.id) && styles.menuItemUnavailable
+                  (unavailableItems.has(item.id) || ((global as any).globalUnavailableItems || new Set()).has(item.id)) && styles.menuItemUnavailable
                 ]}
                 onPress={() => addToCart(item)}
-                disabled={unavailableItems.has(item.id)}
+                disabled={unavailableItems.has(item.id) || ((global as any).globalUnavailableItems || new Set()).has(item.id)}
               >
                 <Image source={{ uri: item.image }} style={styles.menuImage} />
                 <View style={styles.menuInfo}>
                   <Text style={styles.menuName}>{item.name}</Text>
                   <Text style={styles.menuDescription}>{item.description}</Text>
                   <Text style={styles.menuPrice}>¥{item.price}</Text>
-                  {unavailableItems.has(item.id) && (
+                  {(unavailableItems.has(item.id) || ((global as any).globalUnavailableItems || new Set()).has(item.id)) && (
                     <Text style={styles.unavailableText}>提供停止中</Text>
                   )}
                 </View>
                 <TouchableOpacity
                   style={[
                     styles.addButton,
-                    unavailableItems.has(item.id) && styles.addButtonDisabled
+                    (unavailableItems.has(item.id) || ((global as any).globalUnavailableItems || new Set()).has(item.id)) && styles.addButtonDisabled
                   ]}
                   onPress={() => addToCart(item)}
-                  disabled={unavailableItems.has(item.id)}
+                  disabled={unavailableItems.has(item.id) || ((global as any).globalUnavailableItems || new Set()).has(item.id)}
                 >
                   <Text style={[
                     styles.addButtonText,
-                    unavailableItems.has(item.id) && styles.addButtonTextDisabled
+                    (unavailableItems.has(item.id) || ((global as any).globalUnavailableItems || new Set()).has(item.id)) && styles.addButtonTextDisabled
                   ]}>
-                    {unavailableItems.has(item.id) ? '×' : '+'}
+                    {(unavailableItems.has(item.id) || ((global as any).globalUnavailableItems || new Set()).has(item.id)) ? '×' : '+'}
                   </Text>
                 </TouchableOpacity>
               </TouchableOpacity>
@@ -1521,6 +1571,16 @@ const styles = StyleSheet.create({
   },
   addButtonTextDisabled: {
     color: '#666666',
+  },
+  debugInfo: {
+    backgroundColor: 'rgba(139, 69, 19, 0.1)',
+    paddingHorizontal: 15,
+    paddingVertical: 5,
+  },
+  debugText: {
+    fontSize: 12,
+    color: '#8B4513',
+    textAlign: 'center',
   },
   deleteMenuItem: {
     // この関数を追加
