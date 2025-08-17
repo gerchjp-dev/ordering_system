@@ -1086,6 +1086,25 @@ const styles = StyleSheet.create({
   dailySpecialButtonTextActive: {
     color: '#FFFFFF',
   },
+  childSpecialButton: {
+    backgroundColor: '#3B82F6',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 4,
+    minWidth: 80,
+  },
+  childSpecialButtonActive: {
+    backgroundColor: '#059669',
+  },
+  childSpecialButtonText: {
+    color: '#FFFFFF',
+    fontSize: 10,
+    fontWeight: 'bold',
+    textAlign: 'center',
+  },
+  childSpecialButtonTextActive: {
+    color: '#FFFFFF',
+  },
   dailySpecialBadge: {
     backgroundColor: '#10B981',
     paddingHorizontal: 8,
