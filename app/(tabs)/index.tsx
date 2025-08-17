@@ -934,7 +934,6 @@ export default function TablesScreen() {
     </View>
   );
 }
-}
 
 const styles = StyleSheet.create({
   container: {
