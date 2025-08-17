@@ -647,6 +647,18 @@ export default function TablesScreen() {
     (global as any).getOrderHistory = () => orderHistory;
     
     (global as any).getAllTables = () => tables;
+    
+    (global as any).deleteOrderHistory = (orderId: string) => {
+      setOrderHistory(prev => prev.filter(order => order.id !== orderId));
+    };
+    
+    (global as any).updateOrderHistory = (orderId: string, updatedOrder: any) => {
+      setOrderHistory(prev => 
+        prev.map(order => 
+          order.id === orderId ? updatedOrder : order
+        )
+      );
+    };
   }, [tables, orderHistory, database]);
 
   return (
