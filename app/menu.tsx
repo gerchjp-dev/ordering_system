@@ -10,10 +10,10 @@ import {
   TextInput,
   Alert,
 } from 'react-native';
-import { Coffee, ArrowLeft, ShoppingCart, Plus, CreditCard as Edit, Trash2, Save, X, Minus } from 'lucide-react-native';
-import { Coffee, ArrowLeft, ShoppingCart, Plus, CreditCard as Edit, Trash2, Save, X, Minus, Camera } from 'lucide-react-native';
+import { Coffee, ArrowLeft, ShoppingCart, Plus, CreditCard as Edit, Trash2, Save, X, Minus, Camera, RotateCcw, Archive } from 'lucide-react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useDatabase } from '@/hooks/useDatabase';
+import * as ImagePicker from 'expo-image-picker';
 
 interface MenuItem {
   id: string;
@@ -22,6 +22,8 @@ interface MenuItem {
   image: string;
   category: string;
   description: string;
+  isDeleted?: boolean;
+  deletedAt?: Date;
 }
 
 const initialMenuItems: MenuItem[] = [
@@ -86,6 +88,10 @@ const initializeGlobalMenuState = () => {
       (global as any).globalUnavailableItems = new Set<string>();
       console.log('🌐 提供停止リスト初期化');
     }
+    if (!(global as any).globalDeletedMenuItems) {
+      (global as any).globalDeletedMenuItems = [];
+      console.log('🌐 削除済みメニューリスト初期化');
+    }
   }
 };
 
@@ -100,6 +106,10 @@ const updateGlobalUnavailableItems = (newUnavailableItems: Set<string>) => {
   console.log('🌐 提供停止リスト更新:', Array.from(newUnavailableItems));
 };
 
+const updateGlobalDeletedMenuItems = (newDeletedMenuItems: MenuItem[]) => {
+  (global as any).globalDeletedMenuItems = [...newDeletedMenuItems];
+  console.log('🌐 削除済みメニューリスト更新:', newDeletedMenuItems.length, '件');
+};
 export default function MenuScreen() {
   const { database, isConnected } = useDatabase();
   const router = useRouter();
@@ -115,6 +125,10 @@ export default function MenuScreen() {
     initializeGlobalMenuState();
     return [...((global as any).globalMenuItems || initialMenuItems)];
   });
+  const [deletedMenuItems, setDeletedMenuItems] = useState<MenuItem[]>(() => {
+    initializeGlobalMenuState();
+    return [...((global as any).globalDeletedMenuItems || [])];
+  });
   const [categories] = useState(['定食', 'ドリンク', 'デザート']);
   const [unavailableItems, setUnavailableItems] = useState<Set<string>>(() => {
     initializeGlobalMenuState();
@@ -124,6 +138,7 @@ export default function MenuScreen() {
   // モーダル状態
   const [showAddMenuModal, setShowAddMenuModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
+  const [showTrashModal, setShowTrashModal] = useState(false);
   const [editingItem, setEditingItem] = useState<MenuItem | null>(null);
   
   // 新規メニュー項目
@@ -222,6 +237,7 @@ export default function MenuScreen() {
     console.log('📱 グローバル状態から読み込み開始');
     const globalMenuItems = (global as any).globalMenuItems;
     const globalUnavailableItems = (global as any).globalUnavailableItems;
+    const globalDeletedMenuItems = (global as any).globalDeletedMenuItems;
     
     if (globalMenuItems) {
       console.log('📱 グローバルメニュー読み込み:', globalMenuItems.length, '件');
@@ -230,6 +246,10 @@ export default function MenuScreen() {
     if (globalUnavailableItems) {
       console.log('📱 提供停止項目読み込み:', Array.from(globalUnavailableItems));
       setUnavailableItems(new Set(globalUnavailableItems));
+    }
+    if (globalDeletedMenuItems) {
+      console.log('📱 削除済みメニュー読み込み:', globalDeletedMenuItems.length, '件');
+      setDeletedMenuItems([...globalDeletedMenuItems]);
     }
   };
 
@@ -369,13 +389,13 @@ export default function MenuScreen() {
   };
 
   // メニュー項目を削除する関数
-  const deleteMenuItem = (id: string) => {
+  const softDeleteMenuItem = (id: string) => {
     const itemToDelete = menuItems.find(item => item.id === id);
     console.log('🗑️ メニュー削除要求:', itemToDelete?.name, id);
     
     Alert.alert(
-      '削除確認',
-      `「${itemToDelete?.name}」を削除しますか？\n\n削除後は注文できなくなります。`,
+      'メニューを削除',
+      `「${itemToDelete?.name}」を削除しますか？\n\n削除されたメニューはゴミ箱に移動され、後で復元できます。`,
       [
         { text: 'キャンセル', style: 'cancel' },
         {
@@ -385,13 +405,27 @@ export default function MenuScreen() {
             try {
               console.log('🗑️ メニュー削除実行:', id);
 
+              if (!itemToDelete) return;
+
+              // 削除されたアイテムを削除済みリストに追加
+              const deletedItem = {
+                ...itemToDelete,
+                isDeleted: true,
+                deletedAt: new Date(),
+              };
+
               if (database && isConnected) {
-                await database.deleteMenuItem(id);
+                // データベースでは論理削除フラグを設定
+                await database.updateMenuItem(id, { is_active: false });
                 await loadMenuItems();
               } else {
+                // ローカル状態から削除してゴミ箱に移動
                 const updatedMenuItems = menuItems.filter(item => item.id !== id);
+                const updatedDeletedItems = [...deletedMenuItems, deletedItem];
                 setMenuItems(updatedMenuItems);
+                setDeletedMenuItems(updatedDeletedItems);
                 updateGlobalMenuItems(updatedMenuItems);
+                updateGlobalDeletedMenuItems(updatedDeletedItems);
                 console.log('🌐 ローカルメニュー削除完了:', updatedMenuItems.length, '件');
               }
 
@@ -401,7 +435,7 @@ export default function MenuScreen() {
               setUnavailableItems(newUnavailableItems);
               updateGlobalUnavailableItems(newUnavailableItems);
 
-              Alert.alert('削除完了', `「${itemToDelete?.name}」が削除されました`);
+              Alert.alert('削除完了', `「${itemToDelete?.name}」がゴミ箱に移動されました`);
             } catch (error) {
               console.error('メニュー削除エラー:', error);
               Alert.alert('エラー', 'メニューの削除に失敗しました');
