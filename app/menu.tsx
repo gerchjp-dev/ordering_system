@@ -8,12 +8,11 @@ import {
   Image,
   Modal,
   TextInput,
+  Alert,
 } from 'react-native';
-import { Coffee, ArrowLeft, ShoppingCart, Plus } from 'lucide-react-native';
+import { Coffee, ArrowLeft, ShoppingCart, Plus, Edit, Trash2, Save, X, Minus } from 'lucide-react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useDatabase } from '@/hooks/useDatabase';
-import { Alert } from 'react-native';
-import { MenuItem as DBMenuItem } from '@/lib/database';
 
 interface MenuItem {
   id: string;
@@ -50,63 +49,7 @@ const initialMenuItems: MenuItem[] = [
     description: '新鮮な魚の塩焼きとご飯、味噌汁、小鉢のセット',
   },
   {
-    id: 'teishoku-4',
-    name: '豚の生姜焼き定食',
-    price: 890,
-    image: 'https://images.pexels.com/photos/1640777/pexels-photo-1640777.jpeg?auto=compress&cs=tinysrgb&w=300',
-    category: '定食',
-    description: '甘辛い生姜焼きとご飯、味噌汁、小鉢のセット',
-  },
-  {
-    id: 'teishoku-5',
-    name: 'ハンバーグ定食',
-    price: 950,
-    image: 'https://images.pexels.com/photos/1640777/pexels-photo-1640777.jpeg?auto=compress&cs=tinysrgb&w=300',
-    category: '定食',
-    description: 'ジューシーなハンバーグとご飯、味噌汁、小鉢のセット',
-  },
-  {
-    id: 'teishoku-6',
-    name: '天ぷら定食',
-    price: 1080,
-    image: 'https://images.pexels.com/photos/1640777/pexels-photo-1640777.jpeg?auto=compress&cs=tinysrgb&w=300',
-    category: '定食',
-    description: 'サクサクの天ぷらとご飯、味噌汁、小鉢のセット',
-  },
-  {
-    id: 'teishoku-7',
-    name: 'カツ定食',
-    price: 980,
-    image: 'https://images.pexels.com/photos/1640777/pexels-photo-1640777.jpeg?auto=compress&cs=tinysrgb&w=300',
-    category: '定食',
-    description: 'サクサクのとんかつとご飯、味噌汁、小鉢のセット',
-  },
-  {
     id: 'drink-1',
-    name: 'エスプレッソ',
-    price: 300,
-    image: 'https://images.pexels.com/photos/302899/pexels-photo-302899.jpeg?auto=compress&cs=tinysrgb&w=300',
-    category: 'ドリンク',
-    description: '濃厚なイタリアンエスプレッソ',
-  },
-  {
-    id: 'drink-2',
-    name: 'カプチーノ',
-    price: 420,
-    image: 'https://images.pexels.com/photos/312418/pexels-photo-312418.jpeg?auto=compress&cs=tinysrgb&w=300',
-    category: 'ドリンク',
-    description: 'ふわふわミルクフォームのカプチーノ',
-  },
-  {
-    id: 'drink-3',
-    name: 'ラテ',
-    price: 450,
-    image: 'https://images.pexels.com/photos/324028/pexels-photo-324028.jpeg?auto=compress&cs=tinysrgb&w=300',
-    category: 'ドリンク',
-    description: 'なめらかなミルクとエスプレッソのハーモニー',
-  },
-  {
-    id: 'drink-4',
     name: '緑茶',
     price: 200,
     image: 'https://images.pexels.com/photos/1638280/pexels-photo-1638280.jpeg?auto=compress&cs=tinysrgb&w=300',
@@ -114,7 +57,7 @@ const initialMenuItems: MenuItem[] = [
     description: '香り高い緑茶',
   },
   {
-    id: 'drink-5',
+    id: 'drink-2',
     name: 'ほうじ茶',
     price: 200,
     image: 'https://images.pexels.com/photos/1638280/pexels-photo-1638280.jpeg?auto=compress&cs=tinysrgb&w=300',
@@ -122,82 +65,67 @@ const initialMenuItems: MenuItem[] = [
     description: '香ばしいほうじ茶',
   },
   {
-    id: 'drink-6',
-    name: '抹茶',
-    price: 350,
-    image: 'https://images.pexels.com/photos/1638280/pexels-photo-1638280.jpeg?auto=compress&cs=tinysrgb&w=300',
-    category: 'ドリンク',
-    description: '本格的な抹茶',
-  },
-  {
     id: 'dessert-1',
-    name: 'チーズケーキ',
-    price: 520,
-    image: 'https://images.pexels.com/photos/1126359/pexels-photo-1126359.jpeg?auto=compress&cs=tinysrgb&w=300',
-    category: 'デザート',
-    description: '濃厚でクリーミーなNYチーズケーキ',
-  },
-  {
-    id: 'dessert-2',
     name: 'わらび餅',
     price: 380,
     image: 'https://images.pexels.com/photos/1126359/pexels-photo-1126359.jpeg?auto=compress&cs=tinysrgb&w=300',
     category: 'デザート',
     description: 'なめらかなわらび餅',
   },
-  {
-    id: 'dessert-3',
-    name: 'みたらし団子',
-    price: 320,
-    image: 'https://images.pexels.com/photos/6880219/pexels-photo-6880219.jpeg?auto=compress&cs=tinysrgb&w=300',
-    category: 'デザート',
-    description: '甘辛いみたらし団子',
-  },
-  {
-    id: 'dessert-4',
-    name: 'あんみつ',
-    price: 450,
-    image: 'https://images.pexels.com/photos/1126359/pexels-photo-1126359.jpeg?auto=compress&cs=tinysrgb&w=300',
-    category: 'デザート',
-    description: '和風あんみつ',
-  },
 ];
 
-// グローバル状態管理
-// グローバル状態の初期化
-const initializeGlobalState = () => {
+// グローバル状態管理の初期化
+const initializeGlobalMenuState = () => {
   if (typeof global !== 'undefined') {
     if (!(global as any).globalMenuItems) {
       (global as any).globalMenuItems = [...initialMenuItems];
+      console.log('🌐 グローバルメニュー初期化:', (global as any).globalMenuItems.length, '件');
     }
     if (!(global as any).globalUnavailableItems) {
       (global as any).globalUnavailableItems = new Set<string>();
+      console.log('🌐 提供停止リスト初期化');
     }
   }
 };
 
-// 初期化を実行
-initializeGlobalState();
+// グローバル状態を更新する関数
+const updateGlobalMenuItems = (newMenuItems: MenuItem[]) => {
+  (global as any).globalMenuItems = [...newMenuItems];
+  console.log('🌐 グローバルメニュー更新:', newMenuItems.length, '件');
+};
+
+const updateGlobalUnavailableItems = (newUnavailableItems: Set<string>) => {
+  (global as any).globalUnavailableItems = new Set(newUnavailableItems);
+  console.log('🌐 提供停止リスト更新:', Array.from(newUnavailableItems));
+};
 
 export default function MenuScreen() {
   const { database, isConnected } = useDatabase();
   const router = useRouter();
   const { tableId, tableNumber, mode } = useLocalSearchParams();
+  
+  // グローバル状態を初期化
+  React.useEffect(() => {
+    initializeGlobalMenuState();
+  }, []);
+
   const [cart, setCart] = useState<any[]>([]);
   const [menuItems, setMenuItems] = useState<MenuItem[]>(() => {
-    initializeGlobalState();
+    initializeGlobalMenuState();
     return [...((global as any).globalMenuItems || initialMenuItems)];
   });
   const [categories] = useState(['定食', 'ドリンク', 'デザート']);
-  const [dailySpecialId, setDailySpecialId] = useState<string>('teishoku-1'); // 日替わり定食のID
-  const [dailySpecialChildId, setDailySpecialChildId] = useState<string>('teishoku-2'); // 日替わり定食の子メニュー（実際の定食）
-  const [editingItem, setEditingItem] = useState<MenuItem | null>(null);
-  const [showAddMenuModal, setShowAddMenuModal] = useState(false);
-  const [showEditModal, setShowEditModal] = useState(false);
   const [unavailableItems, setUnavailableItems] = useState<Set<string>>(() => {
-    initializeGlobalState();
+    initializeGlobalMenuState();
     return new Set((global as any).globalUnavailableItems || new Set<string>());
   });
+  
+  // モーダル状態
+  const [showAddMenuModal, setShowAddMenuModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editingItem, setEditingItem] = useState<MenuItem | null>(null);
+  
+  // 新規メニュー項目
   const [newMenuItem, setNewMenuItem] = useState({
     name: '',
     price: '',
@@ -206,80 +134,20 @@ export default function MenuScreen() {
     image: 'https://images.pexels.com/photos/312418/pexels-photo-312418.jpeg?auto=compress&cs=tinysrgb&w=300',
   });
 
-  // 提供状況を切り替える関数
-  const toggleAvailability = (itemId: string) => {
-    console.log('🔄 提供状況切り替え:', itemId);
-    setUnavailableItems(prev => {
-      const newSet = new Set(prev);
-      if (newSet.has(itemId)) {
-        newSet.delete(itemId);
-        console.log('✅ 提供開始:', itemId);
-      } else {
-        newSet.add(itemId);
-        console.log('❌ 提供停止:', itemId);
-      }
-      // グローバル状態も更新
-      (global as any).globalUnavailableItems = newSet;
-      console.log('🌐 グローバル状態更新:', Array.from(newSet));
-      return newSet;
-    });
-  };
-
-  // メニュー項目を更新する関数
-  const updateMenuItem = () => {
-    if (!editingItem || !editingItem.name.trim() || !editingItem.price) {
-      Alert.alert('エラー', '商品名と価格を入力してください');
-      return;
+  // グローバル状態から最新データを読み込み
+  const loadFromGlobalState = () => {
+    console.log('📱 グローバル状態から読み込み開始');
+    const globalMenuItems = (global as any).globalMenuItems;
+    const globalUnavailableItems = (global as any).globalUnavailableItems;
+    
+    if (globalMenuItems) {
+      console.log('📱 グローバルメニュー読み込み:', globalMenuItems.length, '件');
+      setMenuItems([...globalMenuItems]);
     }
-
-    console.log('📝 メニュー項目更新:', editingItem);
-    const updatedMenuItems = menuItems.map(item =>
-      item.id === editingItem.id ? editingItem : item
-    );
-    
-    setMenuItems(updatedMenuItems);
-    // グローバル状態も更新
-    (global as any).globalMenuItems = [...updatedMenuItems];
-    console.log('🌐 グローバルメニュー更新:', updatedMenuItems.length, '件');
-    
-    setEditingItem(null);
-    setShowEditModal(false);
-    Alert.alert('成功', 'メニュー項目が更新されました');
-  };
-
-  // メニュー項目を削除する関数
-  const deleteMenuItem = (id: string) => {
-    const itemToDelete = menuItems.find(item => item.id === id);
-    console.log('🗑️ メニュー削除要求:', itemToDelete?.name, id);
-    
-    Alert.alert(
-      '削除確認',
-      `「${itemToDelete?.name}」を削除しますか？\n\n削除後は注文できなくなります。`,
-      [
-        { text: 'キャンセル', style: 'cancel' },
-        {
-          text: '削除',
-          style: 'destructive',
-          onPress: () => {
-            console.log('🗑️ メニュー削除実行:', id);
-            const updatedMenuItems = menuItems.filter(item => item.id !== id);
-            setMenuItems(updatedMenuItems);
-            // グローバル状態も更新
-            (global as any).globalMenuItems = [...updatedMenuItems];
-            console.log('🌐 グローバルメニュー削除後:', updatedMenuItems.length, '件');
-            
-            // 提供停止リストからも削除
-            const newUnavailableItems = new Set(unavailableItems);
-            newUnavailableItems.delete(id);
-            setUnavailableItems(newUnavailableItems);
-            (global as any).globalUnavailableItems = newUnavailableItems;
-            console.log('🌐 提供停止リスト更新:', Array.from(newUnavailableItems));
-            
-            Alert.alert('削除完了', `「${itemToDelete?.name}」が削除されました`);
-          },
-        },
-      ]
-    );
+    if (globalUnavailableItems) {
+      console.log('📱 提供停止項目読み込み:', Array.from(globalUnavailableItems));
+      setUnavailableItems(new Set(globalUnavailableItems));
+    }
   };
 
   // データベースからメニューを読み込み
@@ -298,8 +166,7 @@ export default function MenuScreen() {
         description: item.description || '',
       }));
       setMenuItems(formattedItems);
-      // グローバル状態も更新
-      (global as any).globalMenuItems = [...formattedItems];
+      updateGlobalMenuItems(formattedItems);
       console.log('💾 データベースメニュー読み込み完了:', formattedItems.length, '件');
     } catch (error) {
       console.error('メニュー読み込みエラー:', error);
@@ -310,22 +177,28 @@ export default function MenuScreen() {
     if (database) {
       loadMenuItems();
     } else {
-      // データベース未接続時はグローバル状態から読み込み
-      console.log('📱 グローバル状態から読み込み開始');
-      const globalMenuItems = (global as any).globalMenuItems;
-      const globalUnavailableItems = (global as any).globalUnavailableItems;
-      console.log('📱 グローバルメニュー:', globalMenuItems?.length, '件');
-      console.log('📱 提供停止項目:', globalUnavailableItems ? Array.from(globalUnavailableItems) : []);
-      
-      if (globalMenuItems) {
-        setMenuItems([...globalMenuItems]);
-      }
-      if (globalUnavailableItems) {
-        setUnavailableItems(new Set(globalUnavailableItems));
-      }
+      loadFromGlobalState();
     }
   }, [database]);
 
+  // 提供状況を切り替える関数
+  const toggleAvailability = (itemId: string) => {
+    console.log('🔄 提供状況切り替え:', itemId);
+    const newUnavailableItems = new Set(unavailableItems);
+    
+    if (newUnavailableItems.has(itemId)) {
+      newUnavailableItems.delete(itemId);
+      console.log('✅ 提供開始:', itemId);
+    } else {
+      newUnavailableItems.add(itemId);
+      console.log('❌ 提供停止:', itemId);
+    }
+    
+    setUnavailableItems(newUnavailableItems);
+    updateGlobalUnavailableItems(newUnavailableItems);
+  };
+
+  // メニュー項目を追加する関数
   const addMenuItem = async () => {
     if (!newMenuItem.name || !newMenuItem.price) {
       Alert.alert('エラー', '商品名と価格を入力してください');
@@ -342,6 +215,8 @@ export default function MenuScreen() {
         image: newMenuItem.image,
       };
 
+      console.log('➕ メニュー追加:', item.name);
+
       if (database && isConnected) {
         await database.createMenuItem({
           name: item.name,
@@ -350,13 +225,12 @@ export default function MenuScreen() {
           description: item.description,
           image_url: item.image,
         });
-        await loadMenuItems(); // データベースから再読み込み
+        await loadMenuItems();
       } else {
         const updatedMenuItems = [...menuItems, item];
         setMenuItems(updatedMenuItems);
-        // グローバル状態も更新
-        (global as any).globalMenuItems = [...updatedMenuItems];
-        console.log('🌐 グローバルメニュー追加後:', updatedMenuItems.length, '件');
+        updateGlobalMenuItems(updatedMenuItems);
+        console.log('🌐 ローカルメニュー追加完了:', updatedMenuItems.length, '件');
       }
 
       setNewMenuItem({
@@ -374,28 +248,89 @@ export default function MenuScreen() {
     }
   };
 
-  // テーブルの既存注文を読み込み
-  React.useEffect(() => {
-    if (tableId && (global as any).getTableOrders) {
-      const existingOrders = (global as any).getTableOrders(tableId);
-      if (existingOrders) {
-        setCart(existingOrders);
+  // メニュー項目を更新する関数
+  const updateMenuItem = async () => {
+    if (!editingItem || !editingItem.name.trim() || !editingItem.price) {
+      Alert.alert('エラー', '商品名と価格を入力してください');
+      return;
+    }
+
+    try {
+      console.log('📝 メニュー更新:', editingItem.name);
+
+      if (database && isConnected) {
+        await database.updateMenuItem(editingItem.id, {
+          name: editingItem.name,
+          price: editingItem.price,
+          category: editingItem.category,
+          description: editingItem.description,
+          image_url: editingItem.image,
+        });
+        await loadMenuItems();
+      } else {
+        const updatedMenuItems = menuItems.map(item =>
+          item.id === editingItem.id ? editingItem : item
+        );
+        setMenuItems(updatedMenuItems);
+        updateGlobalMenuItems(updatedMenuItems);
+        console.log('🌐 ローカルメニュー更新完了');
       }
-    }
-  }, [tableId]);
 
-  // テーブル状態を使用中に更新（初回注文時のみ）
-  React.useEffect(() => {
-    if (tableId && mode === 'order' && (global as any).updateTableStatus) {
-      (global as any).updateTableStatus(tableId, 'occupied', {
-        orderStartTime: new Date(),
-        customerCount: 1
-      });
+      setEditingItem(null);
+      setShowEditModal(false);
+      Alert.alert('成功', 'メニュー項目が更新されました');
+    } catch (error) {
+      console.error('メニュー更新エラー:', error);
+      Alert.alert('エラー', 'メニューの更新に失敗しました');
     }
-  }, [tableId, mode]);
+  };
 
+  // メニュー項目を削除する関数
+  const deleteMenuItem = (id: string) => {
+    const itemToDelete = menuItems.find(item => item.id === id);
+    console.log('🗑️ メニュー削除要求:', itemToDelete?.name, id);
+    
+    Alert.alert(
+      '削除確認',
+      `「${itemToDelete?.name}」を削除しますか？\n\n削除後は注文できなくなります。`,
+      [
+        { text: 'キャンセル', style: 'cancel' },
+        {
+          text: '削除',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              console.log('🗑️ メニュー削除実行:', id);
+
+              if (database && isConnected) {
+                await database.deleteMenuItem(id);
+                await loadMenuItems();
+              } else {
+                const updatedMenuItems = menuItems.filter(item => item.id !== id);
+                setMenuItems(updatedMenuItems);
+                updateGlobalMenuItems(updatedMenuItems);
+                console.log('🌐 ローカルメニュー削除完了:', updatedMenuItems.length, '件');
+              }
+
+              // 提供停止リストからも削除
+              const newUnavailableItems = new Set(unavailableItems);
+              newUnavailableItems.delete(id);
+              setUnavailableItems(newUnavailableItems);
+              updateGlobalUnavailableItems(newUnavailableItems);
+
+              Alert.alert('削除完了', `「${itemToDelete?.name}」が削除されました`);
+            } catch (error) {
+              console.error('メニュー削除エラー:', error);
+              Alert.alert('エラー', 'メニューの削除に失敗しました');
+            }
+          },
+        },
+      ]
+    );
+  };
+
+  // カートに追加する関数
   const addToCart = (item: MenuItem) => {
-    // 提供不可のメニューは注文できない
     console.log('🛒 カート追加試行:', item.name, 'ID:', item.id);
     console.log('🛒 現在の提供停止項目:', Array.from(unavailableItems));
     console.log('🛒 グローバル提供停止項目:', Array.from((global as any).globalUnavailableItems || new Set()));
@@ -405,12 +340,6 @@ export default function MenuScreen() {
     const isUnavailable = unavailableItems.has(item.id) || globalUnavailable.has(item.id);
     
     if (isUnavailable) {
-      console.log('❌ 提供停止中のため注文不可:', item.name);
-      Alert.alert('提供不可', `「${item.name}」は現在提供しておりません`);
-      return;
-    }
-    
-    if (unavailableItems.has(item.id)) {
       console.log('❌ 提供停止中のため注文不可:', item.name);
       Alert.alert('提供不可', `「${item.name}」は現在提供しておりません`);
       return;
@@ -456,7 +385,6 @@ export default function MenuScreen() {
       return;
     }
     
-    // 注文を確定
     Alert.alert(
       '注文確定',
       `テーブル ${tableNumber}\n\n注文内容:\n${cart.map(item => `・${item.name} × ${item.quantity} = ¥${(item.price * item.quantity).toLocaleString()}`).join('\n')}\n\n合計金額: ¥${getTotalPrice().toLocaleString()}\n\nこの内容で注文を確定しますか？`,
@@ -468,7 +396,6 @@ export default function MenuScreen() {
             try {
               console.log('📝 注文確定処理開始...');
               
-              // データベースに注文を保存
               if (database && isConnected) {
                 console.log('💾 Supabaseに注文を保存中...');
                 for (const item of cart) {
@@ -480,7 +407,6 @@ export default function MenuScreen() {
                   });
                 }
                 
-                // テーブル状態を更新
                 await database.updateTable(tableId as string, {
                   status: 'occupied',
                   customer_count: 1,
@@ -492,7 +418,6 @@ export default function MenuScreen() {
                 console.log('⚠️ データベース未接続 - ローカル処理のみ');
               }
               
-              // グローバル関数でローカル状態も更新
               if ((global as any).updateTableOrder) {
                 (global as any).updateTableOrder(tableId, cart, getTotalPrice());
               }
@@ -511,96 +436,6 @@ export default function MenuScreen() {
                   {
                     text: 'OK',
                     onPress: () => {
-                      // カートをクリアしてテーブル管理画面に戻る
-                      setCart([]);
-                      router.back();
-                    },
-                  },
-                ]
-              );
-            } catch (error) {
-              console.error('❌ 注文確定エラー:', error);
-              Alert.alert(
-                'エラー',
-                `注文確定中にエラーが発生しました:\n\n${error instanceof Error ? error.message : '不明なエラー'}\n\n接続状態: ${isConnected ? '🟢 データベース連携' : '🔴 ローカルのみ'}`
-              );
-            }
-          },
-        },
-      ]
-    );
-  };
-
-  // カートが変更されるたびにテーブルの注文を更新
-  React.useEffect(() => {
-    if (tableId && (global as any).updateTableOrder) {
-      const totalAmount = getTotalPrice();
-      (global as any).updateTableOrder(tableId, cart, totalAmount);
-    }
-  }, [cart, tableId]);
-
-  const proceedToPayment = () => {
-    if (cart.length === 0) {
-      Alert.alert('エラー', 'カートが空です');
-      return;
-    }
-    
-    // 注文を確定
-    Alert.alert(
-      '注文確定',
-      `テーブル ${tableNumber}\n\n注文内容:\n${cart.map(item => `・${item.name} × ${item.quantity} = ¥${(item.price * item.quantity).toLocaleString()}`).join('\n')}\n\n合計金額: ¥${getTotalPrice().toLocaleString()}\n\nこの内容で注文を確定しますか？`,
-      [
-        { text: 'キャンセル', style: 'cancel' },
-        {
-          text: '注文確定',
-          onPress: async () => {
-            try {
-              console.log('📝 注文確定処理開始...');
-              
-              // データベースに注文を保存
-              if (database && isConnected) {
-                console.log('💾 Supabaseに注文を保存中...');
-                for (const item of cart) {
-                  await database.createOrder({
-                    table_id: tableId as string,
-                    menu_item_id: item.id,
-                    quantity: item.quantity,
-                    unit_price: item.price,
-                  });
-                }
-                
-                // テーブル状態を更新
-                await database.updateTable(tableId as string, {
-                  status: 'occupied',
-                  customer_count: 1,
-                  order_start_time: new Date().toISOString(),
-                  total_amount: getTotalPrice(),
-                });
-                console.log('✅ Supabase注文保存完了');
-              } else {
-                console.log('⚠️ データベース未接続 - ローカル処理のみ');
-              }
-              
-              // グローバル関数でローカル状態も更新
-              if ((global as any).updateTableOrder) {
-                (global as any).updateTableOrder(tableId, cart, getTotalPrice());
-              }
-              
-              if ((global as any).updateTableStatus) {
-                (global as any).updateTableStatus(tableId, 'occupied', {
-                  orderStartTime: new Date(),
-                  customerCount: 1
-                });
-              }
-              
-              Alert.alert(
-                '注文確定完了',
-                `🎉 テーブル ${tableNumber}の注文が確定されました！\n\n📝 ${cart.length}品目の注文\n💰 合計金額: ¥${getTotalPrice().toLocaleString()}\n\n支払いはテーブル管理画面から行えます。`,
-                [
-                  {
-                    text: 'OK',
-                    onPress: () => {
-                      // カートをクリアしてテーブル管理画面に戻る
                       setCart([]);
                       router.back();
                     },
@@ -649,6 +484,12 @@ export default function MenuScreen() {
           </View>
         </View>
 
+        <View style={styles.statusBar}>
+          <Text style={styles.statusText}>
+            {isConnected ? '🟢 データベース連携' : '🔴 ローカルデータ'} • メニュー: {menuItems.length}件 • 提供停止: {unavailableItems.size}件
+          </Text>
+        </View>
+
         <ScrollView style={styles.content}>
           {categories.map(category => (
             <View key={category} style={styles.categorySection}>
@@ -684,14 +525,19 @@ export default function MenuScreen() {
                     </TouchableOpacity>
                     <TouchableOpacity
                       style={styles.editMenuButton}
-                      onPress={() => setEditingItem(item)}
+                      onPress={() => {
+                        setEditingItem(item);
+                        setShowEditModal(true);
+                      }}
                     >
+                      <Edit size={14} color="#FFFFFF" />
                       <Text style={styles.editMenuButtonText}>編集</Text>
                     </TouchableOpacity>
                     <TouchableOpacity
                       style={styles.deleteMenuButton}
                       onPress={() => deleteMenuItem(item.id)}
                     >
+                      <Trash2 size={14} color="#FFFFFF" />
                       <Text style={styles.deleteMenuButtonText}>削除</Text>
                     </TouchableOpacity>
                   </View>
@@ -710,59 +556,69 @@ export default function MenuScreen() {
         >
           <View style={styles.modalOverlay}>
             <View style={styles.modalContent}>
-              <Text style={styles.modalTitle}>新しいメニュー項目を追加</Text>
-              
-              <TextInput
-                style={styles.input}
-                placeholder="商品名"
-                value={newMenuItem.name}
-                onChangeText={(text) => setNewMenuItem({...newMenuItem, name: text})}
-              />
-              
-              <TextInput
-                style={styles.input}
-                placeholder="価格"
-                keyboardType="numeric"
-                value={newMenuItem.price}
-                onChangeText={(text) => setNewMenuItem({...newMenuItem, price: text})}
-              />
-              
-              <View style={styles.pickerContainer}>
-                <Text style={styles.pickerLabel}>カテゴリ:</Text>
-                <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.categoryPicker}>
-                  {categories.map((category) => (
-                    <TouchableOpacity
-                      key={category}
-                      style={[
-                        styles.categoryOption,
-                        newMenuItem.category === category && styles.categoryOptionSelected
-                      ]}
-                      onPress={() => setNewMenuItem({...newMenuItem, category})}
-                    >
-                      <Text style={[
-                        styles.categoryOptionText,
-                        newMenuItem.category === category && styles.categoryOptionTextSelected
-                      ]}>
-                        {category}
-                      </Text>
-                    </TouchableOpacity>
-                  ))}
-                </ScrollView>
+              <View style={styles.modalHeader}>
+                <Text style={styles.modalTitle}>新しいメニュー項目を追加</Text>
+                <TouchableOpacity
+                  style={styles.modalCloseButton}
+                  onPress={() => setShowAddMenuModal(false)}
+                >
+                  <X size={20} color="#8B4513" />
+                </TouchableOpacity>
               </View>
               
-              <TextInput
-                style={styles.input}
-                placeholder="説明"
-                value={newMenuItem.description}
-                onChangeText={(text) => setNewMenuItem({...newMenuItem, description: text})}
-              />
-              
-              <TextInput
-                style={styles.input}
-                placeholder="画像URL"
-                value={newMenuItem.image}
-                onChangeText={(text) => setNewMenuItem({...newMenuItem, image: text})}
-              />
+              <ScrollView style={styles.modalBody}>
+                <TextInput
+                  style={styles.input}
+                  placeholder="商品名"
+                  value={newMenuItem.name}
+                  onChangeText={(text) => setNewMenuItem({...newMenuItem, name: text})}
+                />
+                
+                <TextInput
+                  style={styles.input}
+                  placeholder="価格"
+                  keyboardType="numeric"
+                  value={newMenuItem.price}
+                  onChangeText={(text) => setNewMenuItem({...newMenuItem, price: text})}
+                />
+                
+                <View style={styles.pickerContainer}>
+                  <Text style={styles.pickerLabel}>カテゴリ:</Text>
+                  <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.categoryPicker}>
+                    {categories.map((category) => (
+                      <TouchableOpacity
+                        key={category}
+                        style={[
+                          styles.categoryOption,
+                          newMenuItem.category === category && styles.categoryOptionSelected
+                        ]}
+                        onPress={() => setNewMenuItem({...newMenuItem, category})}
+                      >
+                        <Text style={[
+                          styles.categoryOptionText,
+                          newMenuItem.category === category && styles.categoryOptionTextSelected
+                        ]}>
+                          {category}
+                        </Text>
+                      </TouchableOpacity>
+                    ))}
+                  </ScrollView>
+                </View>
+                
+                <TextInput
+                  style={styles.input}
+                  placeholder="説明"
+                  value={newMenuItem.description}
+                  onChangeText={(text) => setNewMenuItem({...newMenuItem, description: text})}
+                />
+                
+                <TextInput
+                  style={styles.input}
+                  placeholder="画像URL"
+                  value={newMenuItem.image}
+                  onChangeText={(text) => setNewMenuItem({...newMenuItem, image: text})}
+                />
+              </ScrollView>
               
               <View style={styles.modalButtons}>
                 <TouchableOpacity
@@ -776,6 +632,7 @@ export default function MenuScreen() {
                   style={styles.saveButton}
                   onPress={addMenuItem}
                 >
+                  <Plus size={16} color="#FFFFFF" />
                   <Text style={styles.saveButtonText}>追加</Text>
                 </TouchableOpacity>
               </View>
@@ -792,9 +649,21 @@ export default function MenuScreen() {
         >
           <View style={styles.modalOverlay}>
             <View style={styles.modalContent}>
-              <Text style={styles.modalTitle}>メニュー項目を編集</Text>
+              <View style={styles.modalHeader}>
+                <Text style={styles.modalTitle}>メニュー項目を編集</Text>
+                <TouchableOpacity
+                  style={styles.modalCloseButton}
+                  onPress={() => {
+                    setShowEditModal(false);
+                    setEditingItem(null);
+                  }}
+                >
+                  <X size={20} color="#8B4513" />
+                </TouchableOpacity>
+              </View>
+              
               {editingItem && (
-                <>
+                <ScrollView style={styles.modalBody}>
                   <TextInput
                     style={styles.input}
                     placeholder="商品名"
@@ -842,25 +711,27 @@ export default function MenuScreen() {
                     value={editingItem.image}
                     onChangeText={(text) => setEditingItem({...editingItem, image: text})}
                   />
-                  <View style={styles.modalButtons}>
-                    <TouchableOpacity
-                      style={styles.cancelButton}
-                      onPress={() => {
-                        setShowEditModal(false);
-                        setEditingItem(null);
-                      }}
-                    >
-                      <Text style={styles.cancelButtonText}>キャンセル</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                      style={styles.saveButton}
-                      onPress={updateMenuItem}
-                    >
-                      <Text style={styles.saveButtonText}>更新</Text>
-                    </TouchableOpacity>
-                  </View>
-                </>
+                </ScrollView>
               )}
+              
+              <View style={styles.modalButtons}>
+                <TouchableOpacity
+                  style={styles.cancelButton}
+                  onPress={() => {
+                    setShowEditModal(false);
+                    setEditingItem(null);
+                  }}
+                >
+                  <Text style={styles.cancelButtonText}>キャンセル</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.saveButton}
+                  onPress={updateMenuItem}
+                >
+                  <Save size={16} color="#FFFFFF" />
+                  <Text style={styles.saveButtonText}>更新</Text>
+                </TouchableOpacity>
+              </View>
             </View>
           </View>
         </Modal>
@@ -868,7 +739,7 @@ export default function MenuScreen() {
     );
   }
 
-  // メニュー選択モード
+  // メニュー選択モード（注文画面）
   return (
     <View style={styles.container}>
       <View style={styles.header}>
@@ -889,7 +760,7 @@ export default function MenuScreen() {
         <View style={styles.connectionStatus}>
           <TouchableOpacity
             style={styles.cartButton}
-            onPress={proceedToPayment}
+            onPress={confirmOrder}
           >
             <ShoppingCart size={20} color="#FFFFFF" />
             {cart.length > 0 && (
@@ -902,10 +773,9 @@ export default function MenuScreen() {
         </View>
       </View>
 
-      {/* デバッグ情報表示 */}
       <View style={styles.debugInfo}>
         <Text style={styles.debugText}>
-          メニュー: {menuItems.length}件 | 提供停止: {unavailableItems.size}件
+          メニュー: {menuItems.length}件 | 提供停止: {unavailableItems.size}件 | カート: {cart.length}件
         </Text>
       </View>
 
@@ -913,42 +783,47 @@ export default function MenuScreen() {
         {categories.map(category => (
           <View key={category} style={styles.categorySection}>
             <Text style={styles.categoryTitle}>{category}</Text>
-            {groupedItems[category].map(item => (
-              <TouchableOpacity
-                key={item.id}
-                style={[
-                  styles.menuItem,
-                  (unavailableItems.has(item.id) || ((global as any).globalUnavailableItems || new Set()).has(item.id)) && styles.menuItemUnavailable
-                ]}
-                onPress={() => addToCart(item)}
-                disabled={unavailableItems.has(item.id) || ((global as any).globalUnavailableItems || new Set()).has(item.id)}
-              >
-                <Image source={{ uri: item.image }} style={styles.menuImage} />
-                <View style={styles.menuInfo}>
-                  <Text style={styles.menuName}>{item.name}</Text>
-                  <Text style={styles.menuDescription}>{item.description}</Text>
-                  <Text style={styles.menuPrice}>¥{item.price}</Text>
-                  {(unavailableItems.has(item.id) || ((global as any).globalUnavailableItems || new Set()).has(item.id)) && (
-                    <Text style={styles.unavailableText}>提供停止中</Text>
-                  )}
-                </View>
+            {groupedItems[category].map(item => {
+              const globalUnavailable = (global as any).globalUnavailableItems || new Set();
+              const isUnavailable = unavailableItems.has(item.id) || globalUnavailable.has(item.id);
+              
+              return (
                 <TouchableOpacity
+                  key={item.id}
                   style={[
-                    styles.addButton,
-                    (unavailableItems.has(item.id) || ((global as any).globalUnavailableItems || new Set()).has(item.id)) && styles.addButtonDisabled
+                    styles.menuItem,
+                    isUnavailable && styles.menuItemUnavailable
                   ]}
                   onPress={() => addToCart(item)}
-                  disabled={unavailableItems.has(item.id) || ((global as any).globalUnavailableItems || new Set()).has(item.id)}
+                  disabled={isUnavailable}
                 >
-                  <Text style={[
-                    styles.addButtonText,
-                    (unavailableItems.has(item.id) || ((global as any).globalUnavailableItems || new Set()).has(item.id)) && styles.addButtonTextDisabled
-                  ]}>
-                    {(unavailableItems.has(item.id) || ((global as any).globalUnavailableItems || new Set()).has(item.id)) ? '×' : '+'}
-                  </Text>
+                  <Image source={{ uri: item.image }} style={styles.menuImage} />
+                  <View style={styles.menuInfo}>
+                    <Text style={styles.menuName}>{item.name}</Text>
+                    <Text style={styles.menuDescription}>{item.description}</Text>
+                    <Text style={styles.menuPrice}>¥{item.price}</Text>
+                    {isUnavailable && (
+                      <Text style={styles.unavailableText}>提供停止中</Text>
+                    )}
+                  </View>
+                  <TouchableOpacity
+                    style={[
+                      styles.addButton,
+                      isUnavailable && styles.addButtonDisabled
+                    ]}
+                    onPress={() => addToCart(item)}
+                    disabled={isUnavailable}
+                  >
+                    <Text style={[
+                      styles.addButtonText,
+                      isUnavailable && styles.addButtonTextDisabled
+                    ]}>
+                      {isUnavailable ? '×' : '+'}
+                    </Text>
+                  </TouchableOpacity>
                 </TouchableOpacity>
-              </TouchableOpacity>
-            ))}
+              );
+            })}
           </View>
         ))}
       </ScrollView>
@@ -969,14 +844,14 @@ export default function MenuScreen() {
                     style={styles.cartItemButton}
                     onPress={() => removeFromCart(item.id)}
                   >
-                    <Text style={styles.cartItemButtonText}>-</Text>
+                    <Minus size={12} color="#FFFFFF" />
                   </TouchableOpacity>
                   <Text style={styles.cartItemQuantity}>{item.quantity}</Text>
                   <TouchableOpacity
                     style={styles.cartItemButton}
                     onPress={() => addToCart(item)}
                   >
-                    <Text style={styles.cartItemButtonText}>+</Text>
+                    <Plus size={12} color="#FFFFFF" />
                   </TouchableOpacity>
                 </View>
               </View>
@@ -993,6 +868,7 @@ export default function MenuScreen() {
     </View>
   );
 }
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -1081,6 +957,27 @@ const styles = StyleSheet.create({
     borderRadius: 4,
     backgroundColor: '#10B981',
   },
+  statusBar: {
+    backgroundColor: 'rgba(139, 69, 19, 0.1)',
+    paddingHorizontal: 15,
+    paddingVertical: 8,
+  },
+  statusText: {
+    fontSize: 12,
+    color: '#8B4513',
+    textAlign: 'center',
+    fontWeight: '600',
+  },
+  debugInfo: {
+    backgroundColor: 'rgba(139, 69, 19, 0.1)',
+    paddingHorizontal: 15,
+    paddingVertical: 5,
+  },
+  debugText: {
+    fontSize: 12,
+    color: '#8B4513',
+    textAlign: 'center',
+  },
   content: {
     flex: 1,
     padding: 15,
@@ -1115,19 +1012,6 @@ const styles = StyleSheet.create({
     opacity: 0.6,
     backgroundColor: '#F5F5F5',
   },
-  addButton: {
-    backgroundColor: '#8B4513',
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  addButtonText: {
-    color: '#FFFFFF',
-    fontSize: 20,
-    fontWeight: 'bold',
-  },
   menuImage: {
     width: 60,
     height: 60,
@@ -1161,7 +1045,7 @@ const styles = StyleSheet.create({
   },
   menuActions: {
     flexDirection: 'column',
-    gap: 8,
+    gap: 6,
     alignItems: 'flex-end',
     minWidth: 80,
   },
@@ -1170,7 +1054,6 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
     borderRadius: 4,
     minWidth: 60,
-    marginBottom: 4,
   },
   availableButton: {
     backgroundColor: '#10B981',
@@ -1182,6 +1065,7 @@ const styles = StyleSheet.create({
     fontSize: 10,
     fontWeight: 'bold',
     textAlign: 'center',
+    color: '#FFFFFF',
   },
   availableButtonText: {
     color: '#FFFFFF',
@@ -1191,29 +1075,52 @@ const styles = StyleSheet.create({
   },
   editMenuButton: {
     backgroundColor: '#8B4513',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 6,
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 4,
     minWidth: 60,
   },
   editMenuButtonText: {
     color: '#FFFFFF',
-    fontSize: 12,
+    fontSize: 10,
     fontWeight: 'bold',
-    textAlign: 'center',
+    marginLeft: 4,
   },
   deleteMenuButton: {
     backgroundColor: '#EF4444',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 6,
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 4,
     minWidth: 60,
   },
   deleteMenuButtonText: {
     color: '#FFFFFF',
-    fontSize: 12,
+    fontSize: 10,
     fontWeight: 'bold',
-    textAlign: 'center',
+    marginLeft: 4,
+  },
+  addButton: {
+    backgroundColor: '#8B4513',
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  addButtonDisabled: {
+    backgroundColor: '#CCCCCC',
+  },
+  addButtonText: {
+    color: '#FFFFFF',
+    fontSize: 20,
+    fontWeight: 'bold',
+  },
+  addButtonTextDisabled: {
+    color: '#666666',
   },
   cartPreview: {
     backgroundColor: '#FFFFFF',
@@ -1273,11 +1180,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  cartItemButtonText: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
   cartItemQuantity: {
     marginHorizontal: 10,
     fontSize: 16,
@@ -1304,16 +1206,34 @@ const styles = StyleSheet.create({
   modalContent: {
     backgroundColor: '#FFFFFF',
     borderRadius: 12,
+    width: '95%',
+    maxWidth: 500,
+    maxHeight: '90%',
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
     padding: 20,
-    width: '90%',
-    maxWidth: 400,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E0E0E0',
   },
   modalTitle: {
     fontSize: 18,
     fontWeight: 'bold',
     color: '#8B4513',
-    marginBottom: 20,
-    textAlign: 'center',
+  },
+  modalCloseButton: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: '#F5E6D3',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalBody: {
+    padding: 20,
+    maxHeight: 400,
   },
   input: {
     borderWidth: 1,
@@ -1359,230 +1279,36 @@ const styles = StyleSheet.create({
   modalButtons: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginTop: 10,
+    padding: 20,
+    borderTopWidth: 1,
+    borderTopColor: '#E0E0E0',
+    gap: 10,
   },
   cancelButton: {
     backgroundColor: '#E5E5E5',
     paddingVertical: 12,
     paddingHorizontal: 20,
     borderRadius: 8,
-    flex: 0.45,
+    flex: 1,
+    alignItems: 'center',
   },
   cancelButtonText: {
     color: '#666666',
     fontWeight: 'bold',
-    textAlign: 'center',
   },
   saveButton: {
     backgroundColor: '#8B4513',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
     paddingVertical: 12,
     paddingHorizontal: 20,
     borderRadius: 8,
-    flex: 0.45,
+    flex: 1,
   },
   saveButtonText: {
     color: '#FFFFFF',
     fontWeight: 'bold',
-    textAlign: 'center',
-  },
-  menuActions: {
-    flexDirection: 'column',
-    gap: 8,
-    alignItems: 'flex-end',
-  },
-  editMenuButton: {
-    backgroundColor: '#8B4513',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 6,
-    minWidth: 60,
-  },
-  editMenuButtonText: {
-    color: '#FFFFFF',
-    fontSize: 12,
-    fontWeight: 'bold',
-    textAlign: 'center',
-  },
-  deleteMenuButton: {
-    backgroundColor: '#EF4444',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 6,
-    minWidth: 60,
-  },
-  deleteMenuButtonText: {
-    color: '#FFFFFF',
-    fontSize: 12,
-    fontWeight: 'bold',
-    textAlign: 'center',
-  },
-  availabilityButton: {
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 4,
-    minWidth: 60,
-    marginBottom: 4,
-  },
-  availableButton: {
-    backgroundColor: '#10B981',
-  },
-  unavailableButton: {
-    backgroundColor: '#EF4444',
-  },
-  availabilityButtonText: {
-    fontSize: 10,
-    fontWeight: 'bold',
-    textAlign: 'center',
-  },
-  availableButtonText: {
-    color: '#FFFFFF',
-  },
-  unavailableButtonText: {
-    color: '#FFFFFF',
-  },
-  unavailableText: {
-    fontSize: 12,
-    color: '#EF4444',
-    fontWeight: 'bold',
-    marginTop: 2,
-  },
-  menuItemUnavailable: {
-    opacity: 0.6,
-    backgroundColor: '#F5F5F5',
-  },
-  menuActions: {
-    flexDirection: 'column',
-    gap: 8,
-    alignItems: 'flex-end',
-  },
-  editMenuButton: {
-    backgroundColor: '#8B4513',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 6,
-    minWidth: 60,
-  },
-  editMenuButtonText: {
-    color: '#FFFFFF',
-    fontSize: 12,
-    fontWeight: 'bold',
-    textAlign: 'center',
-  },
-  deleteMenuButton: {
-    backgroundColor: '#EF4444',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 6,
-    minWidth: 60,
-  },
-  deleteMenuButtonText: {
-    color: '#FFFFFF',
-    fontSize: 12,
-    fontWeight: 'bold',
-    textAlign: 'center',
-  },
-  dailySpecialButton: {
-    backgroundColor: '#F59E0B',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 4,
-    minWidth: 80,
-  },
-  dailySpecialButtonActive: {
-    backgroundColor: '#10B981',
-  },
-  dailySpecialButtonText: {
-    color: '#FFFFFF',
-    fontSize: 10,
-    fontWeight: 'bold',
-    textAlign: 'center',
-  },
-  dailySpecialButtonTextActive: {
-    color: '#FFFFFF',
-  },
-  childSpecialButton: {
-    backgroundColor: '#3B82F6',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 4,
-    minWidth: 80,
-  },
-  childSpecialButtonActive: {
-    backgroundColor: '#059669',
-  },
-  childSpecialButtonText: {
-    color: '#FFFFFF',
-    fontSize: 10,
-    fontWeight: 'bold',
-    textAlign: 'center',
-  },
-  childSpecialButtonTextActive: {
-    color: '#FFFFFF',
-  },
-  dailySpecialBadge: {
-    backgroundColor: '#10B981',
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: 4,
-    marginTop: 4,
-    alignSelf: 'flex-start',
-  },
-  dailySpecialText: {
-    color: '#FFFFFF',
-    fontSize: 10,
-    fontWeight: 'bold',
-  },
-  availabilityButton: {
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 4,
-    minWidth: 60,
-    marginBottom: 4,
-  },
-  availableButton: {
-    backgroundColor: '#10B981',
-  },
-  unavailableButton: {
-    backgroundColor: '#EF4444',
-  },
-  availabilityButtonText: {
-    fontSize: 10,
-    fontWeight: 'bold',
-    textAlign: 'center',
-  },
-  availableButtonText: {
-    color: '#FFFFFF',
-  },
-  unavailableButtonText: {
-    color: '#FFFFFF',
-  },
-  unavailableText: {
-    fontSize: 12,
-    color: '#EF4444',
-    fontWeight: 'bold',
-    marginTop: 2,
-  },
-  menuItemUnavailable: {
-    opacity: 0.6,
-    backgroundColor: '#F5F5F5',
-  },
-  addButtonDisabled: {
-    backgroundColor: '#CCCCCC',
-  },
-  addButtonTextDisabled: {
-    color: '#666666',
-  },
-  debugInfo: {
-    backgroundColor: 'rgba(139, 69, 19, 0.1)',
-    paddingHorizontal: 15,
-    paddingVertical: 5,
-  },
-  debugText: {
-    fontSize: 12,
-    color: '#8B4513',
-    textAlign: 'center',
-  },
-  deleteMenuItem: {
-    // この関数を追加
+    marginLeft: 6,
   },
 });
