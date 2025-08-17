@@ -35,7 +35,11 @@ export const useDatabase = () => {
     };
 
     if (!supabaseLoading) {
-      initDatabase();
+      initDatabase().catch((err) => {
+        console.error('Failed to initialize database:', err);
+        setError(err instanceof Error ? err.message : 'データベース初期化に失敗しました');
+        setIsLoading(false);
+      });
     }
   }, [supabase, supabaseLoading]);
 

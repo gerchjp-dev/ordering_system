@@ -18,7 +18,10 @@ export const useSupabase = () => {
     };
 
     if (!supabase) {
-      initSupabase();
+      initSupabase().catch((error) => {
+        console.error('Failed to initialize Supabase:', error);
+        setIsLoading(false);
+      });
     } else {
       setIsLoading(false);
     }
