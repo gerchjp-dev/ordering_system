@@ -59,14 +59,15 @@ export default function PaymentScreen() {
   };
 
   const processPayment = () => {
-    if (orders.length === 0) {
+    const totalOrders = [...confirmedOrders, ...orders];
+    if (totalOrders.length === 0) {
       Alert.alert('エラー', '支払い対象の注文がありません');
       return;
     }
     
     Alert.alert(
       '💳 支払い確認',
-      `テーブル: ${tableNumber}\n\n注文内容:\n${orders.map(item => `・${item.name} × ${item.quantity} = ¥${(item.price * item.quantity).toLocaleString()}`).join('\n')}\n\n合計金額: ¥${getTotalAmount().toLocaleString()}\n\n会計を完了しますか？`,
+      `テーブル: ${tableNumber}\n\n注文内容:\n${totalOrders.map(item => `・${item.name} × ${item.quantity} = ¥${(item.price * item.quantity).toLocaleString()}`).join('\n')}\n\n合計金額: ¥${getTotalAmount().toLocaleString()}\n\n会計を完了しますか？`,
       [
         { text: 'キャンセル', style: 'cancel' },
         {
@@ -79,7 +80,7 @@ export default function PaymentScreen() {
               const orderHistoryItem = {
                 id: Date.now().toString(),
                 tableNumber: tableNumber as string,
-                items: orders.map(order => ({
+                items: totalOrders.map(order => ({
                   name: order.name,
                   quantity: order.quantity,
                   price: order.price
@@ -114,7 +115,7 @@ export default function PaymentScreen() {
               console.log('🎉 支払い処理完了');
               Alert.alert(
                 '支払い完了',
-                `🎉 テーブル ${currentTableNumber}の会計が完了しました！\n\n💰 合計金額: ¥${getTotalAmount().toLocaleString()}\n📝 注文履歴に保存されました\n🔄 テーブルが空席に戻りました\n\n処理モード: ${isConnected ? '🟢 データベース連携' : '🔴 ローカルのみ'}`,
+                `🎉 テーブル ${currentTableNumber}の会計が完了しました！\n\n💰 合計金額: ¥${getTotalAmount().toLocaleString()}\n📝 注文履歴に保存されました\n🔄 テーブルが空席に戻りました`,
                 [
                   {
                     text: 'OK',
@@ -128,7 +129,7 @@ export default function PaymentScreen() {
               console.error('❌ 支払い処理エラー:', error);
               Alert.alert(
                 'エラー', 
-                `❌ 支払い処理中にエラーが発生しました:\n\n${error instanceof Error ? error.message : '不明なエラー'}\n\n接続状態: ${isConnected ? '🟢 データベース連携' : '🔴 ローカルのみ'}`
+                `❌ 支払い処理中にエラーが発生しました:\n\n${error instanceof Error ? error.message : '不明なエラー'}`
               );
             }
           },
@@ -220,13 +221,9 @@ export default function PaymentScreen() {
                 <Text style={styles.totalLabel}>小計</Text>
                 <Text style={styles.totalValue}>¥{getTotalAmount().toLocaleString()}</Text>
               </View>
-              <View style={styles.totalRow}>
-                <Text style={styles.totalLabel}>消費税 (10%)</Text>
-                <Text style={styles.totalValue}>¥{Math.floor(getTotalAmount() * 0.1).toLocaleString()}</Text>
-              </View>
               <View style={[styles.totalRow, styles.finalTotal]}>
                 <Text style={styles.finalTotalLabel}>合計</Text>
-                <Text style={styles.finalTotalValue}>¥{Math.floor(getTotalAmount() * 1.1).toLocaleString()}</Text>
+                <Text style={styles.finalTotalValue}>¥{getTotalAmount().toLocaleString()}</Text>
               </View>
             </View>
           </View>
@@ -234,7 +231,7 @@ export default function PaymentScreen() {
       </ScrollView>
 
       {/* 支払いボタン */}
-      {orders.length > 0 && (
+      {(orders.length > 0 || confirmedOrders.length > 0) && (
         <View style={styles.paymentSection}>
           <TouchableOpacity
             style={styles.paymentButton}
@@ -242,7 +239,7 @@ export default function PaymentScreen() {
           >
             <CreditCard size={24} color="#FFFFFF" />
             <Text style={styles.paymentButtonText}>
-              ¥{Math.floor(getTotalAmount() * 1.1).toLocaleString()} を支払う
+              ¥{getTotalAmount().toLocaleString()} を支払う
             </Text>
           </TouchableOpacity>
         </View>
