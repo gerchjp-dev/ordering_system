@@ -53,6 +53,7 @@ const initialTables: Table[] = [
 export default function TablesScreen() {
   const { database, isLoading, error, isConnected } = useDatabase();
   const [tables, setTables] = useState<Table[]>(initialTables);
+  const [storeName, setStoreName] = useState('茶茶日和');
   const [isUsingMockData, setIsUsingMockData] = useState(true);
   const [selectedFilter, setSelectedFilter] = useState<'all' | 'available' | 'occupied'>('all');
   const [showAddModal, setShowAddModal] = useState(false);
@@ -63,6 +64,24 @@ export default function TablesScreen() {
   const [orderHistory, setOrderHistory] = useState<any[]>([]);
   const [showHamburgerMenu, setShowHamburgerMenu] = useState(false);
   const router = useRouter();
+
+  // 店舗名をグローバル状態から読み込み
+  React.useEffect(() => {
+    const loadStoreName = () => {
+      if ((global as any).getStoreName) {
+        const globalStoreName = (global as any).getStoreName();
+        if (globalStoreName) {
+          setStoreName(globalStoreName);
+        }
+      }
+    };
+
+    loadStoreName();
+    
+    // 定期的に店舗名をチェック
+    const interval = setInterval(loadStoreName, 1000);
+    return () => clearInterval(interval);
+  }, []);
 
   // データベース接続状態の確認
   React.useEffect(() => {
