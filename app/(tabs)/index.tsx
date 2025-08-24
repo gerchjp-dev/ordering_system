@@ -10,7 +10,6 @@ import {
   TextInput,
 } from 'react-native';
 import { Plus, Users, Clock, CircleCheck as CheckCircle, Circle as XCircle, CreditCard as Edit, Trash2, Menu, UtensilsCrossed, ClipboardList, TrendingUp, X, Settings } from 'lucide-react-native';
-import { Calendar } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import { useDatabase } from '@/hooks/useDatabase';
 import { Table as DBTable } from '@/lib/database';
@@ -19,7 +18,7 @@ interface Table {
   id: string;
   number: string;
   seats: number;
-  status: 'available' | 'occupied' | 'reserved' | 'cleaning';
+  status: 'available' | 'occupied';
   orderStartTime?: Date;
   customerCount?: number;
   orders: CartItem[];
@@ -41,8 +40,8 @@ const initialTables: Table[] = [
     { id: 'mock-item-4', name: '緑茶', price: 200, quantity: 2, category: 'ドリンク' }
   ], totalAmount: 2360 },
   { id: 'mock-3', number: 'T3', seats: 2, status: 'available', orders: [], totalAmount: 0 },
-  { id: 'mock-4', number: 'T4', seats: 6, status: 'reserved', orders: [], totalAmount: 0 },
-  { id: 'mock-5', number: 'T5', seats: 4, status: 'cleaning', orders: [], totalAmount: 0 },
+  { id: 'mock-4', number: 'T4', seats: 6, status: 'available', orders: [], totalAmount: 0 },
+  { id: 'mock-5', number: 'T5', seats: 4, status: 'available', orders: [], totalAmount: 0 },
   { id: 'mock-6', number: 'T6', seats: 2, status: 'occupied', orderStartTime: new Date(Date.now() - 15 * 60 * 1000), customerCount: 2, orders: [
     { id: 'mock-item-2', name: '鶏の唐揚げ定食', price: 850, quantity: 1, category: '定食' },
     { id: 'mock-item-5', name: 'ほうじ茶', price: 200, quantity: 1, category: 'ドリンク' }
@@ -55,7 +54,7 @@ export default function TablesScreen() {
   const { database, isLoading, error, isConnected } = useDatabase();
   const [tables, setTables] = useState<Table[]>(initialTables);
   const [isUsingMockData, setIsUsingMockData] = useState(true);
-  const [selectedFilter, setSelectedFilter] = useState<'all' | 'available' | 'occupied' | 'reserved' | 'cleaning'>('all');
+  const [selectedFilter, setSelectedFilter] = useState<'all' | 'available' | 'occupied'>('all');
   const [showAddModal, setShowAddModal] = useState(false);
   const [newTableNumber, setNewTableNumber] = useState('');
   const [newTableSeats, setNewTableSeats] = useState('');
@@ -63,7 +62,6 @@ export default function TablesScreen() {
   const [showEditModal, setShowEditModal] = useState(false);
   const [orderHistory, setOrderHistory] = useState<any[]>([]);
   const [showHamburgerMenu, setShowHamburgerMenu] = useState(false);
-  const [showCalendarModal, setShowCalendarModal] = useState(false);
   const router = useRouter();
 
   // データベース接続状態の確認
@@ -127,8 +125,6 @@ export default function TablesScreen() {
         return '#10B981'; // Green
       case 'occupied':
         return '#EF4444'; // Red
-      case 'reserved':
-        return '#F59E0B'; // Yellow
       default:
         return '#8B4513';
     }
@@ -140,8 +136,6 @@ export default function TablesScreen() {
         return '空席';
       case 'occupied':
         return '使用中';
-      case 'reserved':
-        return '予約済み';
       default:
         return '';
     }
@@ -154,8 +148,8 @@ export default function TablesScreen() {
   };
 
   const handleTablePress = (table: Table) => {
-    if (table.status === 'available' || table.status === 'reserved') {
-      // 空席・予約済みの場合は注文画面に遷移
+    if (table.status === 'available') {
+      // 空席の場合は注文画面に遷移
       router.push(`/order?tableId=${table.id}&tableNumber=${table.number}`);
     } else if (table.status === 'occupied') {
       // 使用中の場合も注文画面に遷移（既存の注文が表示される）
@@ -176,10 +170,6 @@ export default function TablesScreen() {
               setEditingTable(table);
               setShowEditModal(true);
             },
-          },
-          {
-            text: '予約済みに変更',
-            onPress: () => updateTableStatus(table.id, 'reserved'),
           },
           {
             text: 'テーブル削除',
@@ -205,30 +195,6 @@ export default function TablesScreen() {
             text: 'テーブル削除（強制）',
             style: 'destructive',
             onPress: () => forceDeleteTable(table.id),
-          },
-        ]
-      );
-    } else if (table.status === 'reserved') {
-      Alert.alert(
-        `テーブル ${table.number}`,
-        '何をしますか？',
-        [
-          { text: 'キャンセル', style: 'cancel' },
-          {
-            text: 'テーブル名変更',
-            onPress: () => {
-              setEditingTable(table);
-              setShowEditModal(true);
-            },
-          },
-          {
-            text: '予約解除',
-            onPress: () => updateTableStatus(table.id, 'available'),
-          },
-          {
-            text: 'テーブル削除',
-            style: 'destructive',
-            onPress: () => deleteTable(table.id),
           },
         ]
       );
@@ -550,7 +516,6 @@ export default function TablesScreen() {
     return {
       available: stats.available || 0,
       occupied: stats.occupied || 0,
-      reserved: stats.reserved || 0,
     };
   };
 
@@ -671,17 +636,10 @@ export default function TablesScreen() {
           <Text style={styles.statLabel}>使用中</Text>
         </TouchableOpacity>
         <TouchableOpacity 
-          style={[styles.statItem, selectedFilter === 'reserved' && styles.statItemActive]}
-          onPress={() => setSelectedFilter(selectedFilter === 'reserved' ? 'all' : 'reserved')}
-        >
-          <Text style={[styles.statNumber, { color: '#F59E0B' }]}>{stats.reserved}</Text>
-          <Text style={styles.statLabel}>予約済み</Text>
-        </TouchableOpacity>
-        <TouchableOpacity 
           style={styles.calendarButton}
-          onPress={() => setShowCalendarModal(true)}
+          onPress={() => router.push('/calendar')}
         >
-          <Calendar size={20} color="#8B4513" />
+          <Text style={[styles.statNumber, { color: '#8B4513' }]}>📅</Text>
           <Text style={styles.calendarButtonText}>予約</Text>
         </TouchableOpacity>
       </View>
@@ -690,8 +648,7 @@ export default function TablesScreen() {
         <View style={styles.filterIndicator}>
           <Text style={styles.filterText}>
             {selectedFilter === 'available' ? '空席' : 
-             selectedFilter === 'occupied' ? '使用中' : 
-             '予約済み'}のテーブルを表示中
+             '使用中'}のテーブルを表示中
           </Text>
           <TouchableOpacity
             style={styles.clearFilterButton}
@@ -710,7 +667,7 @@ export default function TablesScreen() {
               style={[
                 styles.tableCard,
                 { borderColor: getStatusColor(table.status) },
-                selectedFilter !== 'all' && table.status === selectedFilter && index < stats[selectedFilter] && styles.priorityCard
+                selectedFilter !== 'all' && table.status === selectedFilter && styles.priorityCard
               ]}
               onPress={() => handleTablePress(table)}
               onLongPress={() => handleTableLongPress(table)}
@@ -720,7 +677,6 @@ export default function TablesScreen() {
               <View style={[styles.statusIndicator, { backgroundColor: getStatusColor(table.status) }]}>
                 {table.status === 'available' && <CheckCircle size={16} color="#FFFFFF" />}
                 {table.status === 'occupied' && <XCircle size={16} color="#FFFFFF" />}
-                {table.status === 'reserved' && <Clock size={16} color="#FFFFFF" />}
               </View>
               
               <Text style={styles.tableNumber}>{table.number}</Text>
@@ -876,7 +832,7 @@ export default function TablesScreen() {
                 style={styles.hamburgerItem}
                 onPress={() => {
                   setShowHamburgerMenu(false);
-                  router.push('/history');
+                  router.push('/order-history');
                 }}
               >
                 <ClipboardList size={24} color="#8B4513" />
@@ -915,38 +871,6 @@ export default function TablesScreen() {
                 <Settings size={24} color="#8B4513" />
                 <Text style={styles.hamburgerItemText}>設定</Text>
               </TouchableOpacity>
-            </View>
-          </View>
-        </View>
-      </Modal>
-
-      {/* カレンダー予約管理モーダル */}
-      <Modal
-        visible={showCalendarModal}
-        transparent={true}
-        animationType="slide"
-        onRequestClose={() => setShowCalendarModal(false)}
-      >
-        <View style={styles.modalOverlay}>
-          <View style={styles.calendarModalContent}>
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>予約カレンダー</Text>
-              <TouchableOpacity
-                style={styles.modalCloseButton}
-                onPress={() => setShowCalendarModal(false)}
-              >
-                <X size={24} color="#8B4513" />
-              </TouchableOpacity>
-            </View>
-            
-            <View style={styles.calendarPlaceholder}>
-              <Calendar size={64} color="#CCCCCC" />
-              <Text style={styles.calendarPlaceholderText}>
-                カレンダー機能は開発中です
-              </Text>
-              <Text style={styles.calendarPlaceholderSubtext}>
-                予約管理機能を準備中...
-              </Text>
             </View>
           </View>
         </View>
@@ -1038,7 +962,7 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   calendarButton: {
-    flex: 1,
+    flex: 1.2,
     alignItems: 'center',
     paddingVertical: 8,
     borderRadius: 8,
@@ -1355,38 +1279,5 @@ const styles = StyleSheet.create({
   },
   deleteButtonText: {
     color: '#DC2626',
-  },
-  calendarModalContent: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 16,
-    padding: 0,
-    width: '95%',
-    maxWidth: 500,
-    maxHeight: '85%',
-  },
-  modalCloseButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: '#F5E6D3',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  calendarPlaceholder: {
-    padding: 60,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  calendarPlaceholderText: {
-    fontSize: 18,
-    color: '#666666',
-    marginTop: 20,
-    fontWeight: '600',
-  },
-  calendarPlaceholderSubtext: {
-    fontSize: 14,
-    color: '#999999',
-    marginTop: 8,
-    textAlign: 'center',
   },
 });

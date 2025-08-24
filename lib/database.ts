@@ -4,8 +4,7 @@ export interface Table {
   id: string;
   number: string;
   seats: number;
-  status: 'available' | 'occupied' | 'reserved';
-  status: 'available' | 'occupied' | 'reserved';
+  status: 'available' | 'occupied';
   customer_count?: number;
   order_start_time?: string;
   total_amount: number;
