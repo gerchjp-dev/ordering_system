@@ -10,6 +10,7 @@ import {
   TextInput,
 } from 'react-native';
 import { Plus, Users, Clock, CircleCheck as CheckCircle, Circle as XCircle, CreditCard as Edit, Trash2, Menu, UtensilsCrossed, ClipboardList, TrendingUp, X, Settings } from 'lucide-react-native';
+import { Calendar } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import { useDatabase } from '@/hooks/useDatabase';
 import { Table as DBTable } from '@/lib/database';

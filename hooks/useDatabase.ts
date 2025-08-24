@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useSupabase } from './useSupabase';
 import { DatabaseService } from '@/lib/database';
 
@@ -8,8 +8,11 @@ export const useDatabase = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [migrationCompleted, setMigrationCompleted] = useState(false);
+  const isMountedRef = useRef(true);
 
   useEffect(() => {
+    isMountedRef.current = true;
+    
     const initDatabase = async () => {
       try {
         console.log('データベース初期化開始...');
@@ -18,29 +21,43 @@ export const useDatabase = () => {
           const db = new DatabaseService(supabase);
           // 初期データを投入
           await db.seedInitialData();
-          setDatabase(db);
-          setError(null);
+          if (isMountedRef.current) {
+            setDatabase(db);
+            setError(null);
+          }
           console.log('データベース初期化完了');
         } else {
           console.log('Supabaseクライアントが利用できません');
-          setDatabase(null);
+          if (isMountedRef.current) {
+            setDatabase(null);
+          }
         }
       } catch (err) {
         console.error('Database initialization error:', err);
-        setError(err instanceof Error ? err.message : 'データベース初期化エラー');
-        setDatabase(null);
+        if (isMountedRef.current) {
+          setError(err instanceof Error ? err.message : 'データベース初期化エラー');
+          setDatabase(null);
+        }
       } finally {
-        setIsLoading(false);
+        if (isMountedRef.current) {
+          setIsLoading(false);
+        }
       }
     };
 
     if (!supabaseLoading) {
       initDatabase().catch((err) => {
         console.error('Failed to initialize database:', err);
-        setError(err instanceof Error ? err.message : 'データベース初期化に失敗しました');
-        setIsLoading(false);
+        if (isMountedRef.current) {
+          setError(err instanceof Error ? err.message : 'データベース初期化に失敗しました');
+          setIsLoading(false);
+        }
       });
     }
+    
+    return () => {
+      isMountedRef.current = false;
+    };
   }, [supabase, supabaseLoading]);
 
   const migrateMockData = async (mockTables: any[], mockMenuItems: any[], mockOrderHistory: any[]) => {
@@ -50,7 +67,9 @@ export const useDatabase = () => {
     
     try {
       await database.migrateMockDataToSupabase(mockTables, mockMenuItems, mockOrderHistory);
-      setMigrationCompleted(true);
+      if (isMountedRef.current) {
+        setMigrationCompleted(true);
+      }
       return true;
     } catch (error) {
       console.error('モックデータ移行エラー:', error);
