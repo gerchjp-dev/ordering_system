@@ -19,77 +19,14 @@ interface MenuItem {
   price: number;
   image: string;
   category: string;
+  description?: string;
+  isDeleted?: boolean;
 }
 
 interface CartItem extends MenuItem {
   quantity: number;
 }
 
-const menuItems: MenuItem[] = [
-  {
-    id: 'mock-menu-1',
-    name: '本日の日替わり定食',
-    price: 980,
-    image: 'https://images.pexels.com/photos/1640777/pexels-photo-1640777.jpeg?auto=compress&cs=tinysrgb&w=300',
-    category: '定食',
-  },
-  {
-    id: 'mock-menu-2',
-    name: '鶏の唐揚げ定食',
-    price: 850,
-    image: 'https://images.pexels.com/photos/2338407/pexels-photo-2338407.jpeg?auto=compress&cs=tinysrgb&w=300',
-    category: '定食',
-  },
-  {
-    id: 'mock-menu-3',
-    name: '焼き魚定食',
-    price: 920,
-    image: 'https://images.pexels.com/photos/1640777/pexels-photo-1640777.jpeg?auto=compress&cs=tinysrgb&w=300',
-    category: '定食',
-  },
-  {
-    id: 'mock-menu-4',
-    name: '緑茶',
-    price: 200,
-    image: 'https://images.pexels.com/photos/1638280/pexels-photo-1638280.jpeg?auto=compress&cs=tinysrgb&w=300',
-    category: 'ドリンク',
-  },
-  {
-    id: 'mock-menu-5',
-    name: 'ほうじ茶',
-    price: 200,
-    image: 'https://images.pexels.com/photos/1638280/pexels-photo-1638280.jpeg?auto=compress&cs=tinysrgb&w=300',
-    category: 'ドリンク',
-  },
-  {
-    id: 'mock-menu-6',
-    name: 'わらび餅',
-    price: 380,
-    image: 'https://images.pexels.com/photos/1126359/pexels-photo-1126359.jpeg?auto=compress&cs=tinysrgb&w=300',
-    category: 'デザート',
-  },
-  {
-    id: 'mock-menu-7',
-    name: 'みたらし団子',
-    price: 320,
-    image: 'https://images.pexels.com/photos/6880219/pexels-photo-6880219.jpeg?auto=compress&cs=tinysrgb&w=300',
-    category: 'デザート',
-  },
-  {
-    id: 'mock-menu-8',
-    name: '抹茶',
-    price: 350,
-    image: 'https://images.pexels.com/photos/1638280/pexels-photo-1638280.jpeg?auto=compress&cs=tinysrgb&w=300',
-    category: 'ドリンク',
-  },
-  {
-    id: 'mock-menu-9',
-    name: 'あんみつ',
-    price: 450,
-    image: 'https://images.pexels.com/photos/1126359/pexels-photo-1126359.jpeg?auto=compress&cs=tinysrgb&w=300',
-    category: 'デザート',
-  },
-];
 
 export default function OrderScreen() {
   const { database, isConnected } = useDatabase();
@@ -97,39 +34,76 @@ export default function OrderScreen() {
   const [pendingOrders, setPendingOrders] = useState<CartItem[]>([]); // 追加注文（未確定）
   const [showTableSelector, setShowTableSelector] = useState(false);
   const [availableTables, setAvailableTables] = useState<any[]>([]);
+  const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
+  const [unavailableItems, setUnavailableItems] = useState<Set<string>>(new Set());
   const router = useRouter();
   const { tableId, tableNumber } = useLocalSearchParams();
   const currentTableId = tableId as string;
 
-  // データベースからメニューを読み込み
-  const [dbMenuItems, setDbMenuItems] = useState<MenuItem[]>([]);
-  
+  // グローバル状態からメニューを読み込み
   const loadMenuItems = async () => {
-    if (!database) return;
+    console.log('📱 注文画面: メニュー読み込み開始');
     
-    try {
-      const items = await database.getMenuItems();
-      const formattedItems: MenuItem[] = items.map(item => ({
-        id: item.id.toString(),
-        name: item.name,
-        price: item.price,
-        image: item.image_url || 'https://images.pexels.com/photos/1640777/pexels-photo-1640777.jpeg?auto=compress&cs=tinysrgb&w=300',
-        category: item.category,
-      }));
-      setDbMenuItems(formattedItems);
-    } catch (error) {
-      console.error('メニュー読み込みエラー:', error);
+    if (database && isConnected) {
+      try {
+        console.log('💾 データベースからメニュー読み込み');
+        const items = await database.getMenuItems();
+        const formattedItems: MenuItem[] = items.map(item => ({
+          id: item.id.toString(),
+          name: item.name,
+          price: item.price,
+          image: item.image_url || 'https://images.pexels.com/photos/1640777/pexels-photo-1640777.jpeg?auto=compress&cs=tinysrgb&w=300',
+          category: item.category,
+          description: item.description,
+        }));
+        setMenuItems(formattedItems);
+        console.log('💾 データベースメニュー読み込み完了:', formattedItems.length, '件');
+      } catch (error) {
+        console.error('メニュー読み込みエラー:', error);
+      }
+    } else {
+      // グローバル状態からメニューを読み込み
+      console.log('🌐 グローバル状態からメニュー読み込み');
+      const globalMenuItems = (global as any).globalMenuItems;
+      if (globalMenuItems) {
+        // 削除されていないメニューのみを表示
+        const activeMenuItems = globalMenuItems.filter((item: any) => !item.isDeleted);
+        setMenuItems(activeMenuItems);
+        console.log('🌐 グローバルメニュー読み込み完了:', activeMenuItems.length, '件');
+      }
+    }
+    
+    // 提供停止項目も読み込み
+    const globalUnavailableItems = (global as any).globalUnavailableItems;
+    if (globalUnavailableItems) {
+      setUnavailableItems(new Set(globalUnavailableItems));
+      console.log('🌐 提供停止項目読み込み:', Array.from(globalUnavailableItems));
     }
   };
 
   React.useEffect(() => {
-    if (database) {
+    loadMenuItems();
+    
+    // 定期的にメニュー状態を更新
+    const interval = setInterval(() => {
       loadMenuItems();
-    }
+    }, 2000); // 2秒ごとに更新
+    
+    return () => clearInterval(interval);
   }, [database]);
 
-  // データベース接続時はDBのメニューを使用、そうでなければモックデータ
-  const currentMenuItems = isConnected && dbMenuItems.length > 0 ? dbMenuItems : menuItems;
+  // 利用可能なメニューのみをフィルタリング
+  const getAvailableMenuItems = () => {
+    return menuItems.filter(item => {
+      // 削除されたメニューは表示しない
+      if (item.isDeleted) return false;
+      // 提供停止中のメニューは表示しない
+      if (unavailableItems.has(item.id)) return false;
+      return true;
+    });
+  };
+
+  const availableMenuItems = getAvailableMenuItems();
 
   // テーブルの既存注文を読み込み（注文履歴として表示）
   useEffect(() => {
@@ -148,6 +122,17 @@ export default function OrderScreen() {
   }, [currentTableId]);
 
   const addToPendingOrders = (item: MenuItem) => {
+    // 削除されたメニューや提供停止中のメニューは注文不可
+    if (item.isDeleted) {
+      Alert.alert('注文不可', 'このメニューは削除されています');
+      return;
+    }
+    
+    if (unavailableItems.has(item.id)) {
+      Alert.alert('注文不可', 'このメニューは現在提供しておりません');
+      return;
+    }
+    
     setPendingOrders(prevOrders => {
       const existingItem = prevOrders.find(order => order.id === item.id);
       if (existingItem) {
@@ -302,7 +287,7 @@ export default function OrderScreen() {
             テーブル {tableNumber} - 注文
           </Text>
           <ChevronDown size={20} color="#FFFFFF" />
-        </TouchableOpacity>
+          {isConnected ? '🟢 データベース連携' : '🔴 ローカルデータ'} • 利用可能メニュー: {availableMenuItems.length}件 • 提供停止: {unavailableItems.size}件
         <View style={styles.placeholder} />
       </View>
 
@@ -343,7 +328,7 @@ export default function OrderScreen() {
             {categories.map(category => (
               <View key={category} style={styles.categorySection}>
                 <Text style={styles.categoryTitle}>{category}</Text>
-                {currentMenuItems
+                {availableMenuItems
                   .filter(item => item.category === category)
                   .map(item => (
                     <TouchableOpacity
