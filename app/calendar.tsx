@@ -6,7 +6,7 @@ import {
   TouchableOpacity,
   Alert,
 } from 'react-native';
-import { ArrowLeft, Calendar, AlertTriangle } from 'lucide-react-native';
+import { ArrowLeft, Calendar, TriangleAlert as AlertTriangle } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 
 export default function CalendarScreen() {
