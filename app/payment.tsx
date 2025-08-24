@@ -59,7 +59,7 @@ export default function PaymentScreen() {
   };
 
   const processPayment = () => {
-    const totalOrders = [...confirmedOrders, ...orders];
+    const totalOrders = [...orders];
     if (totalOrders.length === 0) {
       Alert.alert('エラー', '支払い対象の注文がありません');
       return;
@@ -231,7 +231,7 @@ export default function PaymentScreen() {
       </ScrollView>
 
       {/* 支払いボタン */}
-      {(orders.length > 0 || confirmedOrders.length > 0) && (
+      {orders.length > 0 && (
         <View style={styles.paymentSection}>
           <TouchableOpacity
             style={styles.paymentButton}
