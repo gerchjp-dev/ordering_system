@@ -283,10 +283,12 @@ export default function OrderScreen() {
           style={styles.tableSelector}
           onPress={() => setShowTableSelector(true)}
         >
-          <Text style={styles.headerTitle}>
-            テーブル {tableNumber} - 注文
-          </Text>
-          <ChevronDown size={20} color="#FFFFFF" />
+          <View style={styles.tableSelectorContent}>
+            <Text style={styles.headerTitle}>
+              テーブル {tableNumber} - 注文
+            </Text>
+            <ChevronDown size={20} color="#FFFFFF" />
+          </View>
         </TouchableOpacity>
         <Text style={styles.connectionStatus}>
           {isConnected ? '🟢 データベース連携' : '🔴 ローカルデータ'} • 利用可能メニュー: {availableMenuItems.length}件 • 提供停止: {unavailableItems.size}件
@@ -519,6 +521,11 @@ const styles = StyleSheet.create({
   },
   placeholder: {
     width: 40,
+  },
+  tableSelectorContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
   },
   content: {
     flex: 1,
