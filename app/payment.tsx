@@ -98,18 +98,33 @@ export default function PaymentScreen() {
                 });
                 console.log('✅ Supabase注文履歴保存完了');
                 
-                console.log('🗑️ データベースからテーブル削除中...');
-                await database.deleteTable(currentTableId);
-                console.log('✅ データベーステーブル削除完了');
+                console.log('🔄 データベースでテーブルを空席に戻し中...');
+                await database.updateTable(currentTableId, {
+                  status: 'available',
+                  customer_count: 0,
+                  order_start_time: null,
+                  total_amount: 0,
+                });
+                console.log('✅ データベーステーブル状態更新完了');
               } else {
                 console.log('⚠️ データベース未接続 - ローカル処理のみ');
               }
               
               // グローバル関数でローカル状態も更新
-              if ((global as any).completePayment) {
-                console.log('🔄 ローカル状態更新中...');
-                await (global as any).completePayment(currentTableId, orderHistoryItem);
-                console.log('✅ ローカル状態更新完了');
+              if ((global as any).updateTableStatus) {
+                console.log('🔄 ローカルテーブル状態更新中...');
+                (global as any).updateTableStatus(currentTableId, 'available', {
+                  orders: [],
+                  totalAmount: 0,
+                  orderStartTime: undefined,
+                  customerCount: undefined
+                });
+                console.log('✅ ローカルテーブル状態更新完了');
+              }
+              
+              // 注文履歴をグローバルに追加
+              if ((global as any).addOrderHistory) {
+                (global as any).addOrderHistory(orderHistoryItem);
               }
               
               console.log('🎉 支払い処理完了');

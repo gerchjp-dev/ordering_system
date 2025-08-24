@@ -289,7 +289,7 @@ export default function OrderScreen() {
                   status: 'occupied',
                   customer_count: 1,
                   order_start_time: new Date().toISOString(),
-                  total_amount: getTotalAmount(),
+                  total_amount: getConfirmedTotal() + getPendingTotal(),
                 });
                 console.log('✅ Supabase注文保存完了');
               } else {
@@ -298,7 +298,7 @@ export default function OrderScreen() {
               
               // グローバル関数でローカル状態も更新
               if ((global as any).updateTableOrder) {
-                (global as any).updateTableOrder(currentTableId, updatedConfirmedOrders, getTotalAmount());
+                (global as any).updateTableOrder(currentTableId, updatedConfirmedOrders, getConfirmedTotal() + getPendingTotal());
               }
               
               if ((global as any).updateTableStatus) {
@@ -313,7 +313,7 @@ export default function OrderScreen() {
               
               Alert.alert(
                 '注文確定完了',
-                `🎉 テーブル ${tableNumber}の注文が確定されました！\n\n📝 ${cart.length}品目の注文\n💰 合計金額: ¥${getTotalPrice().toLocaleString()}\n\n支払いは注文画面の支払いボタンから行えます。`,
+                `🎉 テーブル ${tableNumber}の追加注文が確定されました！\n\n📝 ${pendingOrders.length}品目の追加注文\n💰 追加金額: ¥${getPendingTotal().toLocaleString()}\n\n支払いは注文画面の支払いボタンから行えます。`,
                 [{ text: 'OK' }]
               );
             } catch (error) {

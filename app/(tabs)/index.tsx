@@ -309,9 +309,14 @@ export default function TablesScreen() {
                 });
                 console.log('✅ Supabase注文履歴保存完了');
                 
-                console.log('🗑️ データベースからテーブル削除中...');
-                await database.deleteTable(tableId);
-                console.log('✅ データベーステーブル削除完了');
+                console.log('🔄 データベースでテーブルを空席に戻し中...');
+                await database.updateTable(tableId, {
+                  status: 'available',
+                  customer_count: 0,
+                  order_start_time: null,
+                  total_amount: 0,
+                });
+                console.log('✅ データベーステーブル状態更新完了');
               } else {
                 console.log('⚠️ モックデータモード - ローカル処理のみ');
               }
@@ -322,14 +327,14 @@ export default function TablesScreen() {
               console.log('✅ ローカル履歴保存完了');
               
               // ローカルテーブル状態を更新（空席に戻す）
-              console.log('🗑️ ローカルテーブル状態更新中...');
+              console.log('🔄 ローカルテーブル状態更新中...');
               setTables(prevTables => {
                 const updatedTables = prevTables.map(t => 
                   t.id === tableId 
                     ? { ...t, status: 'available' as const, orders: [], totalAmount: 0, orderStartTime: undefined, customerCount: undefined }
                     : t
                 );
-                console.log('✅ ローカルテーブル状態更新完了 - 空席に戻しました');
+                console.log('✅ ローカルテーブル状態更新完了 - 空席に戻りました');
                 return updatedTables;
               });
               
@@ -337,14 +342,14 @@ export default function TablesScreen() {
               console.log('🎉 支払い処理完了');
               Alert.alert(
                 '支払い完了',
-                `🎉 テーブル ${table.number}の会計が完了しました！\n\n💰 合計金額: ¥${table.totalAmount.toLocaleString()}\n📝 注文履歴に保存されました\n🔄 テーブルが空席に戻りました\n\n処理モード: ${isUsingMockData ? '🟡 モックデータ' : '🟢 データベース連携'}`,
+                `🎉 テーブル ${table.number}の会計が完了しました！\n\n💰 合計金額: ¥${table.totalAmount.toLocaleString()}\n📝 注文履歴に保存されました\n🔄 テーブルが空席に戻りました`,
                 [{ text: 'OK' }]
               );
             } catch (error) {
               console.error('❌ 支払い処理エラー:', error);
               Alert.alert(
                 'エラー', 
-                `❌ 支払い処理中にエラーが発生しました:\n\n${error instanceof Error ? error.message : '不明なエラー'}\n\n処理モード: ${isUsingMockData ? '🟡 モックデータ' : '🟢 データベース連携'}\n\nデバッグ情報をコンソールで確認してください。`
+                `❌ 支払い処理中にエラーが発生しました:\n\n${error instanceof Error ? error.message : '不明なエラー'}`
               );
             }
           },
@@ -631,16 +636,9 @@ export default function TablesScreen() {
       setStoreName(newName);
     };
     
-    (global as any).deleteOrderHistory = (orderId: string) => {
-      setOrderHistory(prev => prev.filter(order => order.id !== orderId));
-    };
-    
-    (global as any).updateOrderHistory = (orderId: string, updatedOrder: any) => {
-      setOrderHistory(prev => 
-        prev.map(order => 
-          order.id === orderId ? updatedOrder : order
-        )
-      );
+    // 注文履歴管理関数
+    (global as any).addOrderHistory = (orderHistoryItem: any) => {
+      setOrderHistory(prev => [...prev, orderHistoryItem]);
     };
   }, [tables, orderHistory, database]);
 
