@@ -10,7 +10,7 @@ import {
   Modal,
   TextInput,
 } from 'react-native';
-import { User, Bell, Shield, CircleHelp as HelpCircle, LogOut, Store, Printer, Wifi, CreditCard, Coffee, Plus, CreditCard as Edit, Trash2, Save, X, ArrowUp, ArrowDown, Database, Key, CircleCheck as CheckCircle, CircleAlert as AlertCircle, ArrowLeft } from 'lucide-react-native';
+import { User, Bell, Shield, CircleHelp as HelpCircle, LogOut, Store, Printer, Wifi, CreditCard, Plus, CreditCard as Edit, Trash2, Save, X, ArrowUp, ArrowDown, Database, Key, CircleCheck as CheckCircle, CircleAlert as AlertCircle, ArrowLeft } from 'lucide-react-native';
 import { initializeSupabase, clearSupabaseConfig, loadSupabaseConfig, isSupabaseConfigured } from '@/lib/supabase';
 import { useDatabase } from '@/hooks/useDatabase';
 import { useRouter } from 'expo-router';
@@ -86,28 +86,26 @@ const initialMenuItems: MenuItem[] = [
 export default function SettingsScreen() {
   const router = useRouter();
   const [notifications, setNotifications] = useState(true);
-  const [receiptPrinting, setReceiptPrinting] = useState(true);
+  const [receiptPrinting, setReceiptPrinting] = useState(false);
   const [soundEffects, setSoundEffects] = useState(true);
   const [supabaseConfigured, setSupabaseConfigured] = useState(false);
   const [showSupabaseModal, setShowSupabaseModal] = useState(false);
   const [supabaseUrl, setSupabaseUrl] = useState('');
   const [supabaseAnonKey, setSupabaseAnonKey] = useState('');
   const [isMigrating, setIsMigrating] = useState(false);
-  const [showMenuManagement, setShowMenuManagement] = useState(false);
-  const [showCategoryManagement, setShowCategoryManagement] = useState(false);
-  const [menuItems, setMenuItems] = useState<MenuItem[]>(initialMenuItems);
-  const [categories, setCategories] = useState(['定食', 'ドリンク', 'デザート']);
-  const [isAddingItem, setIsAddingItem] = useState(false);
-  const [editingItem, setEditingItem] = useState<MenuItem | null>(null);
-  const [newCategoryName, setNewCategoryName] = useState('');
-  const [editingCategoryIndex, setEditingCategoryIndex] = useState<number | null>(null);
-  const [newItem, setNewItem] = useState({
-    name: '',
-    price: '',
-    category: '定食',
-    description: '',
-    image: 'https://images.pexels.com/photos/312418/pexels-photo-312418.jpeg?auto=compress&cs=tinysrgb&w=300',
+  
+  // 店舗情報設定
+  const [storeName, setStoreName] = useState('茶茶日和');
+  const [showStoreInfoModal, setShowStoreInfoModal] = useState(false);
+  const [tempStoreName, setTempStoreName] = useState('');
+  
+  // 支払い設定
+  const [paymentMethods, setPaymentMethods] = useState({
+    cash: true,
+    card: false,
+    paypay: false,
   });
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
 
   // データベースフックを追加
   const { database, migrateMockData } = useDatabase();
@@ -199,6 +197,41 @@ export default function SettingsScreen() {
     );
   };
 
+  const handleStoreInfoSave = () => {
+    if (!tempStoreName.trim()) {
+      Alert.alert('エラー', '店舗名を入力してください');
+      return;
+    }
+    
+    setStoreName(tempStoreName.trim());
+    setShowStoreInfoModal(false);
+    setTempStoreName('');
+    Alert.alert('完了', '店舗情報が更新されました');
+  };
+
+  const handlePaymentMethodToggle = (method: 'cash' | 'card' | 'paypay') => {
+    setPaymentMethods(prev => {
+      const newMethods = { ...prev, [method]: !prev[method] };
+      
+      // 少なくとも1つの支払い方法は有効にする
+      const hasAnyEnabled = Object.values(newMethods).some(enabled => enabled);
+      if (!hasAnyEnabled) {
+        Alert.alert('エラー', '少なくとも1つの支払い方法を有効にしてください');
+        return prev;
+      }
+      
+      return newMethods;
+    });
+  };
+
+  const getPaymentMethodsText = () => {
+    const enabled = [];
+    if (paymentMethods.cash) enabled.push('現金');
+    if (paymentMethods.card) enabled.push('カード');
+    if (paymentMethods.paypay) enabled.push('PayPay');
+    
+    return enabled.length > 0 ? enabled.join('、') : '設定なし';
+  };
   const showComingSoon = () => {
     Alert.alert('近日公開', 'この機能は近日公開予定です');
   };
@@ -214,160 +247,6 @@ export default function SettingsScreen() {
     );
   };
 
-  const addMenuItem = () => {
-    if (!newItem.name || !newItem.price) {
-      Alert.alert('エラー', '商品名と価格を入力してください');
-      return;
-    }
-
-    addMenuItemToDB({
-      name: newItem.name,
-      price: parseInt(newItem.price),
-      category: newItem.category,
-      description: newItem.description,
-      image_url: newItem.image,
-    });
-    
-    setNewItem({
-      name: '',
-      price: '',
-      category: categories[0],
-      description: '',
-      image: 'https://images.pexels.com/photos/312418/pexels-photo-312418.jpeg?auto=compress&cs=tinysrgb&w=300',
-    });
-    setIsAddingItem(false);
-    Alert.alert('成功', '新しいメニュー項目が追加されました');
-  };
-
-  const addMenuItemToDB = async (itemData: any) => {
-    // データベース操作は実際のSupabase接続時に実装
-    const item: MenuItem = {
-      id: `mock-menu-${Date.now()}`,
-      name: itemData.name,
-      price: itemData.price,
-      category: itemData.category,
-      description: itemData.description,
-      image: itemData.image_url,
-    };
-    setMenuItems([...menuItems, item]);
-  };
-
-  const updateMenuItem = () => {
-    if (!editingItem) return;
-
-    setMenuItems(prevItems =>
-      prevItems.map(item =>
-        item.id === editingItem.id ? editingItem : item
-      )
-    );
-    setEditingItem(null);
-    Alert.alert('成功', 'メニュー項目が更新されました');
-  };
-
-  const deleteMenuItem = (id: string) => {
-    Alert.alert(
-      '削除確認',
-      'このメニュー項目を削除しますか？',
-      [
-        { text: 'キャンセル', style: 'cancel' },
-        {
-          text: '削除',
-          style: 'destructive',
-          onPress: async () => {
-            // データベース操作は実際のSupabase接続時に実装
-            setMenuItems(menuItems.filter(item => item.id !== id));
-          },
-        },
-      ]
-    );
-  };
-
-  const addCategory = () => {
-    if (!newCategoryName.trim()) {
-      Alert.alert('エラー', 'カテゴリ名を入力してください');
-      return;
-    }
-
-    if (categories.includes(newCategoryName.trim())) {
-      Alert.alert('エラー', 'このカテゴリは既に存在します');
-      return;
-    }
-
-    setCategories([...categories, newCategoryName.trim()]);
-    setNewCategoryName('');
-    Alert.alert('成功', '新しいカテゴリが追加されました');
-  };
-
-  const updateCategory = (index: number, newName: string) => {
-    if (!newName.trim()) {
-      Alert.alert('エラー', 'カテゴリ名を入力してください');
-      return;
-    }
-
-    const oldCategoryName = categories[index];
-    const updatedCategories = [...categories];
-    updatedCategories[index] = newName.trim();
-    
-    // メニュー項目のカテゴリも更新
-    setMenuItems(prevItems =>
-      prevItems.map(item =>
-        item.category === oldCategoryName
-          ? { ...item, category: newName.trim() }
-          : item
-      )
-    );
-    
-    setCategories(updatedCategories);
-    setEditingCategoryIndex(null);
-    Alert.alert('成功', 'カテゴリが更新されました');
-  };
-
-  const deleteCategory = (index: number) => {
-    const categoryToDelete = categories[index];
-    const itemsInCategory = menuItems.filter(item => item.category === categoryToDelete);
-    
-    if (itemsInCategory.length > 0) {
-      Alert.alert(
-        '削除できません',
-        `このカテゴリには${itemsInCategory.length}個のメニュー項目があります。先にメニュー項目を削除するか、他のカテゴリに移動してください。`
-      );
-      return;
-    }
-
-    Alert.alert(
-      'カテゴリ削除',
-      `「${categoryToDelete}」カテゴリを削除しますか？`,
-      [
-        { text: 'キャンセル', style: 'cancel' },
-        {
-          text: '削除',
-          style: 'destructive',
-          onPress: () => {
-            setCategories(categories.filter((_, i) => i !== index));
-          },
-        },
-      ]
-    );
-  };
-
-  const moveCategoryUp = (index: number) => {
-    if (index === 0) return;
-    const newCategories = [...categories];
-    [newCategories[index - 1], newCategories[index]] = [newCategories[index], newCategories[index - 1]];
-    setCategories(newCategories);
-  };
-
-  const moveCategoryDown = (index: number) => {
-    if (index === categories.length - 1) return;
-    const newCategories = [...categories];
-    [newCategories[index], newCategories[index + 1]] = [newCategories[index + 1], newCategories[index]];
-    setCategories(newCategories);
-  };
-
-  const groupedItems = categories.reduce((acc, category) => {
-    acc[category] = menuItems.filter(item => item.category === category);
-    return acc;
-  }, {} as Record<string, MenuItem[]>);
 
   const SettingItem = ({ 
     icon, 
@@ -450,26 +329,17 @@ export default function SettingsScreen() {
           <SettingItem
             icon={<Store size={24} color="#8B4513" />}
             title="店舗情報"
-            subtitle="店舗名、住所、営業時間"
-            onPress={showComingSoon}
-          />
-          <SettingItem
-            icon={<Coffee size={24} color="#8B4513" />}
-            title="メニュー管理"
-            subtitle="メニュー項目の追加・編集・削除"
-            onPress={() => setShowMenuManagement(true)}
-          />
-          <SettingItem
-            icon={<Coffee size={24} color="#8B4513" />}
-            title="カテゴリ管理"
-            subtitle="メニューカテゴリの管理"
-            onPress={() => setShowCategoryManagement(true)}
+            subtitle={`店舗名: ${storeName || '未設定 - 設定が必要です'}`}
+            onPress={() => {
+              setTempStoreName(storeName);
+              setShowStoreInfoModal(true);
+            }}
           />
           <SettingItem
             icon={<CreditCard size={24} color="#8B4513" />}
             title="支払い設定"
-            subtitle="決済方法、税率設定"
-            onPress={showComingSoon}
+            subtitle={`利用可能: ${getPaymentMethodsText()}`}
+            onPress={() => setShowPaymentModal(true)}
           />
           <SettingItem
             icon={<Printer size={24} color="#8B4513" />}
@@ -546,310 +416,131 @@ export default function SettingsScreen() {
         </View>
       </ScrollView>
 
-      {/* メニュー管理モーダル */}
+      {/* 店舗情報設定モーダル */}
       <Modal
-        visible={showMenuManagement}
+        visible={showStoreInfoModal}
         transparent={true}
         animationType="slide"
-        onRequestClose={() => setShowMenuManagement(false)}
+        onRequestClose={() => setShowStoreInfoModal(false)}
       >
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
             <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>メニュー管理</Text>
-              <View style={styles.modalHeaderButtons}>
-                <TouchableOpacity
-                  style={styles.modalHeaderButton}
-                  onPress={() => setIsAddingItem(true)}
-                >
-                  <Plus size={20} color="#8B4513" />
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={styles.modalHeaderButton}
-                  onPress={() => setShowMenuManagement(false)}
-                >
-                  <X size={20} color="#8B4513" />
-                </TouchableOpacity>
-              </View>
-            </View>
-
-            {isAddingItem && (
-              <View style={styles.addItemForm}>
-                <Text style={styles.formTitle}>新しいメニュー項目</Text>
-                <TextInput
-                  style={styles.input}
-                  placeholder="商品名"
-                  value={newItem.name}
-                  onChangeText={(text) => setNewItem({...newItem, name: text})}
-                />
-                <TextInput
-                  style={styles.input}
-                  placeholder="価格"
-                  keyboardType="numeric"
-                  value={newItem.price}
-                  onChangeText={(text) => setNewItem({...newItem, price: text})}
-                />
-                <View style={styles.pickerContainer}>
-                  <Text style={styles.pickerLabel}>カテゴリ:</Text>
-                  <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.categoryPicker}>
-                    {categories.map((category) => (
-                      <TouchableOpacity
-                        key={category}
-                        style={[
-                          styles.categoryOption,
-                          newItem.category === category && styles.categoryOptionSelected
-                        ]}
-                        onPress={() => setNewItem({...newItem, category})}
-                      >
-                        <Text style={[
-                          styles.categoryOptionText,
-                          newItem.category === category && styles.categoryOptionTextSelected
-                        ]}>
-                          {category}
-                        </Text>
-                      </TouchableOpacity>
-                    ))}
-                  </ScrollView>
-                </View>
-                <TextInput
-                  style={styles.input}
-                  placeholder="説明"
-                  value={newItem.description}
-                  onChangeText={(text) => setNewItem({...newItem, description: text})}
-                />
-                <TextInput
-                  style={styles.input}
-                  placeholder="画像URL"
-                  value={newItem.image}
-                  onChangeText={(text) => setNewItem({...newItem, image: text})}
-                />
-                <View style={styles.buttonRow}>
-                  <TouchableOpacity
-                    style={styles.cancelButton}
-                    onPress={() => setIsAddingItem(false)}
-                  >
-                    <Text style={styles.cancelButtonText}>キャンセル</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    style={styles.saveButton}
-                    onPress={addMenuItem}
-                  >
-                    <Text style={styles.saveButtonText}>保存</Text>
-                  </TouchableOpacity>
-                </View>
-              </View>
-            )}
-
-            <ScrollView style={styles.menuList}>
-              {categories.map(category => (
-                <View key={category} style={styles.categorySection}>
-                  <Text style={styles.categoryTitle}>{category}</Text>
-                  {groupedItems[category].map(item => (
-                    <View key={item.id} style={styles.menuItem}>
-                      <View style={styles.menuInfo}>
-                        <Text style={styles.menuName}>{item.name}</Text>
-                        <Text style={styles.menuDescription}>{item.description}</Text>
-                        <Text style={styles.menuPrice}>¥{item.price}</Text>
-                      </View>
-                      <View style={styles.actionButtons}>
-                        <TouchableOpacity
-                          style={styles.editButton}
-                          onPress={() => setEditingItem(item)}
-                        >
-                          <Edit size={16} color="#8B4513" />
-                        </TouchableOpacity>
-                        <TouchableOpacity
-                          style={styles.deleteButton}
-                          onPress={() => deleteMenuItem(item.id)}
-                        >
-                          <Trash2 size={16} color="#DC2626" />
-                        </TouchableOpacity>
-                      </View>
-                    </View>
-                  ))}
-                </View>
-              ))}
-            </ScrollView>
-          </View>
-        </View>
-      </Modal>
-
-      {/* メニュー項目編集モーダル */}
-      <Modal
-        visible={editingItem !== null}
-        transparent={true}
-        animationType="slide"
-        onRequestClose={() => setEditingItem(null)}
-      >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>メニュー項目を編集</Text>
-            {editingItem && (
-              <>
-                <TextInput
-                  style={styles.input}
-                  placeholder="商品名"
-                  value={editingItem.name}
-                  onChangeText={(text) => setEditingItem({...editingItem, name: text})}
-                />
-                <TextInput
-                  style={styles.input}
-                  placeholder="価格"
-                  keyboardType="numeric"
-                  value={editingItem.price.toString()}
-                  onChangeText={(text) => setEditingItem({...editingItem, price: parseInt(text) || 0})}
-                />
-                <View style={styles.pickerContainer}>
-                  <Text style={styles.pickerLabel}>カテゴリ:</Text>
-                  <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.categoryPicker}>
-                    {categories.map((category) => (
-                      <TouchableOpacity
-                        key={category}
-                        style={[
-                          styles.categoryOption,
-                          editingItem.category === category && styles.categoryOptionSelected
-                        ]}
-                        onPress={() => setEditingItem({...editingItem, category})}
-                      >
-                        <Text style={[
-                          styles.categoryOptionText,
-                          editingItem.category === category && styles.categoryOptionTextSelected
-                        ]}>
-                          {category}
-                        </Text>
-                      </TouchableOpacity>
-                    ))}
-                  </ScrollView>
-                </View>
-                <TextInput
-                  style={styles.input}
-                  placeholder="説明"
-                  value={editingItem.description}
-                  onChangeText={(text) => setEditingItem({...editingItem, description: text})}
-                />
-                <TextInput
-                  style={styles.input}
-                  placeholder="画像URL"
-                  value={editingItem.image}
-                  onChangeText={(text) => setEditingItem({...editingItem, image: text})}
-                />
-                <View style={styles.buttonRow}>
-                  <TouchableOpacity
-                    style={styles.cancelButton}
-                    onPress={() => setEditingItem(null)}
-                  >
-                    <Text style={styles.cancelButtonText}>キャンセル</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    style={styles.saveButton}
-                    onPress={updateMenuItem}
-                  >
-                    <Text style={styles.saveButtonText}>更新</Text>
-                  </TouchableOpacity>
-                </View>
-              </>
-            )}
-          </View>
-        </View>
-      </Modal>
-
-      {/* カテゴリ管理モーダル */}
-      <Modal
-        visible={showCategoryManagement}
-        transparent={true}
-        animationType="slide"
-        onRequestClose={() => setShowCategoryManagement(false)}
-      >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>カテゴリ管理</Text>
+              <Text style={styles.modalTitle}>店舗情報設定</Text>
               <TouchableOpacity
                 style={styles.modalHeaderButton}
-                onPress={() => setShowCategoryManagement(false)}
+                onPress={() => setShowStoreInfoModal(false)}
               >
                 <X size={20} color="#8B4513" />
               </TouchableOpacity>
             </View>
             
-            <View style={styles.addCategorySection}>
+            <View style={styles.storeInfoForm}>
+              <Text style={styles.inputLabel}>店舗名</Text>
               <TextInput
-                style={[styles.input, { flex: 1 }]}
-                placeholder="新しいカテゴリ名"
-                value={newCategoryName}
-                onChangeText={setNewCategoryName}
+                style={styles.input}
+                placeholder="店舗名を入力してください"
+                value={tempStoreName}
+                onChangeText={setTempStoreName}
+                autoFocus={true}
               />
+              
+              <View style={styles.helpText}>
+                <Text style={styles.helpTextContent}>
+                  この名前はアプリのヘッダーやレシートに表示されます
+                </Text>
+              </View>
+              
+              <View style={styles.buttonRow}>
+                <TouchableOpacity
+                  style={styles.cancelButton}
+                  onPress={() => {
+                    setShowStoreInfoModal(false);
+                    setTempStoreName('');
+                  }}
+                >
+                  <Text style={styles.cancelButtonText}>キャンセル</Text>
+                </TouchableOpacity>
+                
+                <TouchableOpacity
+                  style={styles.saveButton}
+                  onPress={handleStoreInfoSave}
+                >
+                  <Text style={styles.saveButtonText}>保存</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      {/* 支払い設定モーダル */}
+      <Modal
+        visible={showPaymentModal}
+        transparent={true}
+        animationType="slide"
+        onRequestClose={() => setShowPaymentModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>支払い方法設定</Text>
               <TouchableOpacity
-                style={styles.addCategoryButton}
-                onPress={addCategory}
+                style={styles.modalHeaderButton}
+                onPress={() => setShowPaymentModal(false)}
               >
-                <Plus size={16} color="#FFFFFF" />
+                <X size={20} color="#8B4513" />
               </TouchableOpacity>
             </View>
-
-            <ScrollView style={styles.categoriesList}>
-              {categories.map((category, index) => (
-                <View key={index} style={styles.categoryItem}>
-                  {editingCategoryIndex === index ? (
-                    <View style={styles.editCategoryRow}>
-                      <TextInput
-                        style={[styles.input, styles.editCategoryInput]}
-                        value={category}
-                        onChangeText={(text) => {
-                          const updatedCategories = [...categories];
-                          updatedCategories[index] = text;
-                          setCategories(updatedCategories);
-                        }}
-                      />
-                      <TouchableOpacity
-                        style={styles.saveIconButton}
-                        onPress={() => updateCategory(index, category)}
-                      >
-                        <Save size={16} color="#10B981" />
-                      </TouchableOpacity>
-                      <TouchableOpacity
-                        style={styles.cancelIconButton}
-                        onPress={() => setEditingCategoryIndex(null)}
-                      >
-                        <X size={16} color="#EF4444" />
-                      </TouchableOpacity>
-                    </View>
-                  ) : (
-                    <View style={styles.categoryRow}>
-                      <Text style={styles.categoryName}>{category}</Text>
-                      <View style={styles.categoryActions}>
-                        <TouchableOpacity
-                          style={[styles.moveButton, index === 0 && styles.disabledButton]}
-                          onPress={() => moveCategoryUp(index)}
-                          disabled={index === 0}
-                        >
-                          <ArrowUp size={14} color={index === 0 ? "#CCCCCC" : "#8B4513"} />
-                        </TouchableOpacity>
-                        <TouchableOpacity
-                          style={[styles.moveButton, index === categories.length - 1 && styles.disabledButton]}
-                          onPress={() => moveCategoryDown(index)}
-                          disabled={index === categories.length - 1}
-                        >
-                          <ArrowDown size={14} color={index === categories.length - 1 ? "#CCCCCC" : "#8B4513"} />
-                        </TouchableOpacity>
-                        <TouchableOpacity
-                          style={styles.editIconButton}
-                          onPress={() => setEditingCategoryIndex(index)}
-                        >
-                          <Edit size={14} color="#8B4513" />
-                        </TouchableOpacity>
-                        <TouchableOpacity
-                          style={styles.deleteIconButton}
-                          onPress={() => deleteCategory(index)}
-                        >
-                          <Trash2 size={14} color="#DC2626" />
-                        </TouchableOpacity>
-                      </View>
-                    </View>
-                  )}
-                </View>
-              ))}
-            </ScrollView>
+            
+            <View style={styles.paymentMethodsForm}>
+              <Text style={styles.formDescription}>
+                利用可能な支払い方法を選択してください
+              </Text>
+              
+              <View style={styles.paymentMethodItem}>
+                <Text style={styles.paymentMethodLabel}>現金</Text>
+                <Switch
+                  value={paymentMethods.cash}
+                  onValueChange={() => handlePaymentMethodToggle('cash')}
+                  trackColor={{ false: '#E5E5E5', true: '#8B4513' }}
+                  thumbColor="#FFFFFF"
+                />
+              </View>
+              
+              <View style={styles.paymentMethodItem}>
+                <Text style={styles.paymentMethodLabel}>クレジットカード</Text>
+                <Switch
+                  value={paymentMethods.card}
+                  onValueChange={() => handlePaymentMethodToggle('card')}
+                  trackColor={{ false: '#E5E5E5', true: '#8B4513' }}
+                  thumbColor="#FFFFFF"
+                />
+              </View>
+              
+              <View style={styles.paymentMethodItem}>
+                <Text style={styles.paymentMethodLabel}>PayPay</Text>
+                <Switch
+                  value={paymentMethods.paypay}
+                  onValueChange={() => handlePaymentMethodToggle('paypay')}
+                  trackColor={{ false: '#E5E5E5', true: '#8B4513' }}
+                  thumbColor="#FFFFFF"
+                />
+              </View>
+              
+              <View style={styles.helpText}>
+                <Text style={styles.helpTextContent}>
+                  少なくとも1つの支払い方法を有効にしてください
+                </Text>
+              </View>
+              
+              <TouchableOpacity
+                style={styles.saveButton}
+                onPress={() => setShowPaymentModal(false)}
+              >
+                <Text style={styles.saveButtonText}>完了</Text>
+              </TouchableOpacity>
+            </View>
           </View>
         </View>
       </Modal>
@@ -1095,18 +786,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  addItemForm: {
-    backgroundColor: '#F5E6D3',
-    padding: 15,
-    borderRadius: 8,
-    marginBottom: 15,
-  },
-  formTitle: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#8B4513',
-    marginBottom: 10,
-  },
   input: {
     borderWidth: 1,
     borderColor: '#E0E0E0',
@@ -1115,39 +794,6 @@ const styles = StyleSheet.create({
     marginBottom: 8,
     fontSize: 14,
     backgroundColor: '#FFFFFF',
-  },
-  pickerContainer: {
-    marginBottom: 8,
-  },
-  pickerLabel: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#333333',
-    marginBottom: 6,
-  },
-  categoryPicker: {
-    flexDirection: 'row',
-  },
-  categoryOption: {
-    backgroundColor: '#FFFFFF',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 15,
-    marginRight: 6,
-    borderWidth: 1,
-    borderColor: '#E0E0E0',
-  },
-  categoryOptionSelected: {
-    backgroundColor: '#8B4513',
-    borderColor: '#8B4513',
-  },
-  categoryOptionText: {
-    color: '#8B4513',
-    fontWeight: '600',
-    fontSize: 12,
-  },
-  categoryOptionTextSelected: {
-    color: '#FFFFFF',
   },
   buttonRow: {
     flexDirection: 'row',
@@ -1180,154 +826,25 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     fontSize: 14,
   },
-  menuList: {
-    maxHeight: 400,
+  storeInfoForm: {
+    paddingVertical: 10,
   },
-  categorySection: {
-    marginBottom: 15,
+  paymentMethodsForm: {
+    paddingVertical: 10,
   },
-  categoryTitle: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#8B4513',
-    marginBottom: 8,
-  },
-  menuItem: {
-    backgroundColor: '#F5E6D3',
-    borderRadius: 8,
-    padding: 12,
-    marginBottom: 6,
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  menuInfo: {
-    flex: 1,
-  },
-  menuName: {
-    fontSize: 14,
-    fontWeight: 'bold',
-    color: '#333333',
-  },
-  menuDescription: {
-    fontSize: 12,
-    color: '#666666',
-    marginTop: 2,
-  },
-  menuPrice: {
-    fontSize: 14,
-    fontWeight: 'bold',
-    color: '#8B4513',
-    marginTop: 2,
-  },
-  actionButtons: {
-    flexDirection: 'row',
-    gap: 6,
-  },
-  editButton: {
-    backgroundColor: '#FFFFFF',
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  deleteButton: {
-    backgroundColor: '#FFFFFF',
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  addCategorySection: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 15,
-    gap: 8,
-  },
-  addCategoryButton: {
-    backgroundColor: '#8B4513',
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  categoriesList: {
-    maxHeight: 300,
-  },
-  categoryItem: {
-    marginBottom: 8,
-  },
-  categoryRow: {
+  paymentMethodItem: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    backgroundColor: '#F5E6D3',
-    padding: 12,
-    borderRadius: 8,
+    paddingVertical: 12,
+    paddingHorizontal: 4,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F0F0F0',
   },
-  categoryName: {
-    fontSize: 14,
-    fontWeight: '600',
+  paymentMethodLabel: {
+    fontSize: 16,
     color: '#333333',
-    flex: 1,
-  },
-  categoryActions: {
-    flexDirection: 'row',
-    gap: 6,
-  },
-  moveButton: {
-    backgroundColor: '#FFFFFF',
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  disabledButton: {
-    backgroundColor: '#F0F0F0',
-  },
-  editIconButton: {
-    backgroundColor: '#FFFFFF',
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  deleteIconButton: {
-    backgroundColor: '#FFFFFF',
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  editCategoryRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  editCategoryInput: {
-    flex: 1,
-    marginBottom: 0,
-  },
-  saveIconButton: {
-    backgroundColor: '#DCFCE7',
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  cancelIconButton: {
-    backgroundColor: '#FEE2E2',
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    justifyContent: 'center',
-    alignItems: 'center',
+    fontWeight: '500',
   },
   supabaseForm: {
     paddingVertical: 10,
