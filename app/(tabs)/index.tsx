@@ -647,7 +647,7 @@ export default function TablesScreen() {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>茶茶日和</Text>
+        <Text style={styles.headerTitle}>{storeName}</Text>
         <View style={styles.headerInfo}>
           <Text style={styles.connectionText}>
             {isConnected ? '🟢 DB接続' : '🔴 ローカル'}
