@@ -26,24 +26,31 @@ export default function PaymentScreen() {
   const router = useRouter();
   const { tableId, tableNumber } = useLocalSearchParams();
   const currentTableId = tableId as string;
+  const currentTableNumber = tableNumber as string;
 
   // テーブル情報と注文を読み込み
   useEffect(() => {
+    console.log('💳 支払い画面初期化 - テーブルID:', currentTableId, 'テーブル番号:', currentTableNumber);
+    
     if (currentTableId) {
       // テーブル情報を取得
       if ((global as any).getAllTables) {
         const tables = (global as any).getAllTables();
         const table = tables.find((t: any) => t.id === currentTableId);
+        console.log('💳 テーブル情報取得:', table);
         setTableInfo(table);
       }
 
       // 注文情報を取得
       if ((global as any).getTableOrders) {
         const tableOrders = (global as any).getTableOrders(currentTableId);
+        console.log('💳 注文情報取得:', tableOrders);
         if (tableOrders) {
           setOrders(tableOrders);
         }
       }
+    } else {
+      console.log('❌ テーブルIDが見つかりません');
     }
   }, [currentTableId]);
 
@@ -84,7 +91,7 @@ export default function PaymentScreen() {
               if (database && isConnected) {
                 console.log('💾 データベースに注文履歴を保存中...');
                 await database.createOrderHistory({
-                  table_number: tableNumber as string,
+                  table_number: currentTableNumber,
                   items: orderHistoryItem.items,
                   total_amount: getTotalAmount(),
                 });
@@ -107,7 +114,7 @@ export default function PaymentScreen() {
               console.log('🎉 支払い処理完了');
               Alert.alert(
                 '支払い完了',
-                `🎉 テーブル ${tableNumber}の会計が完了しました！\n\n💰 合計金額: ¥${getTotalAmount().toLocaleString()}\n📝 注文履歴に保存されました\n🔄 テーブルが空席に戻りました\n\n処理モード: ${isConnected ? '🟢 データベース連携' : '🔴 ローカルのみ'}`,
+                `🎉 テーブル ${currentTableNumber}の会計が完了しました！\n\n💰 合計金額: ¥${getTotalAmount().toLocaleString()}\n📝 注文履歴に保存されました\n🔄 テーブルが空席に戻りました\n\n処理モード: ${isConnected ? '🟢 データベース連携' : '🔴 ローカルのみ'}`,
                 [
                   {
                     text: 'OK',
@@ -145,7 +152,7 @@ export default function PaymentScreen() {
         >
           <ArrowLeft size={24} color="#FFFFFF" />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>支払い - テーブル {tableNumber}</Text>
+        <Text style={styles.headerTitle}>支払い - テーブル {currentTableNumber}</Text>
         <View style={styles.placeholder} />
       </View>
 
@@ -157,7 +164,7 @@ export default function PaymentScreen() {
             <View style={styles.tableInfoCard}>
               <View style={styles.infoRow}>
                 <Text style={styles.infoLabel}>テーブル番号:</Text>
-                <Text style={styles.infoValue}>{tableNumber}</Text>
+                <Text style={styles.infoValue}>{currentTableNumber}</Text>
               </View>
               <View style={styles.infoRow}>
                 <Text style={styles.infoLabel}>席数:</Text>

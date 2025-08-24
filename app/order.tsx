@@ -313,7 +313,7 @@ export default function OrderScreen() {
               
               Alert.alert(
                 '注文確定完了',
-                `🎉 追加注文が確定されました！\n\n📝 ${pendingOrders.length}品目の追加注文\n💰 追加金額: ¥${getPendingTotal().toLocaleString()}\n💰 合計金額: ¥${getTotalAmount().toLocaleString()}`,
+                `🎉 テーブル ${tableNumber}の注文が確定されました！\n\n📝 ${cart.length}品目の注文\n💰 合計金額: ¥${getTotalPrice().toLocaleString()}\n\n支払いは注文画面の支払いボタンから行えます。`,
                 [{ text: 'OK' }]
               );
             } catch (error) {
@@ -479,7 +479,10 @@ export default function OrderScreen() {
           </View>
           <TouchableOpacity
             style={styles.paymentButton}
-            onPress={() => router.push(`/payment?tableId=${currentTableId}&tableNumber=${tableNumber}`)}
+            onPress={() => {
+              console.log('💳 支払い画面へ遷移 - テーブルID:', currentTableId, 'テーブル番号:', tableNumber);
+              router.push(`/payment?tableId=${currentTableId}&tableNumber=${tableNumber}`);
+            }}
           >
             <Text style={styles.paymentButtonText}>支払い</Text>
           </TouchableOpacity>
