@@ -290,10 +290,13 @@ export default function OrderScreen() {
             <ChevronDown size={20} color="#FFFFFF" />
           </View>
         </TouchableOpacity>
-        <Text style={styles.connectionStatus}>
+        <View style={styles.placeholder} />
+      </View>
+
+      <View style={styles.statusBar}>
+        <Text style={styles.statusText}>
           {isConnected ? '🟢 データベース連携' : '🔴 ローカルデータ'} • 利用可能メニュー: {availableMenuItems.length}件 • 提供停止: {unavailableItems.size}件
         </Text>
-        <View style={styles.placeholder} />
       </View>
 
       <ScrollView style={styles.content}>
@@ -500,7 +503,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   tableSelector: {
-    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
@@ -508,16 +510,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     borderRadius: 8,
     backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    flex: 1,
+    marginHorizontal: 10,
   },
   headerTitle: {
     fontSize: 20,
     fontWeight: 'bold',
     color: '#FFFFFF',
-  },
-  connectionStatus: {
-    fontSize: 12,
-    color: '#FFFFFF',
-    opacity: 0.8,
   },
   placeholder: {
     width: 40,
@@ -526,6 +525,17 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 5,
+  },
+  statusBar: {
+    backgroundColor: 'rgba(139, 69, 19, 0.1)',
+    paddingHorizontal: 15,
+    paddingVertical: 8,
+  },
+  statusText: {
+    fontSize: 12,
+    color: '#8B4513',
+    textAlign: 'center',
+    fontWeight: '600',
   },
   content: {
     flex: 1,
