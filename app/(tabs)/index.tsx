@@ -62,6 +62,7 @@ export default function TablesScreen() {
   const [showEditModal, setShowEditModal] = useState(false);
   const [orderHistory, setOrderHistory] = useState<any[]>([]);
   const [showHamburgerMenu, setShowHamburgerMenu] = useState(false);
+  const [showCalendarModal, setShowCalendarModal] = useState(false);
   const router = useRouter();
 
   // データベース接続状態の確認
@@ -127,8 +128,6 @@ export default function TablesScreen() {
         return '#EF4444'; // Red
       case 'reserved':
         return '#F59E0B'; // Yellow
-      case 'cleaning':
-        return '#6B7280'; // Gray
       default:
         return '#8B4513';
     }
@@ -142,8 +141,6 @@ export default function TablesScreen() {
         return '使用中';
       case 'reserved':
         return '予約済み';
-      case 'cleaning':
-        return '清掃中';
       default:
         return '';
     }
@@ -162,18 +159,6 @@ export default function TablesScreen() {
     } else if (table.status === 'occupied') {
       // 使用中の場合も注文画面に遷移（既存の注文が表示される）
       router.push(`/order?tableId=${table.id}&tableNumber=${table.number}`);
-    } else if (table.status === 'cleaning') {
-      Alert.alert(
-        `テーブル ${table.number}`,
-        '清掃中です。清掃完了しましたか？',
-        [
-          { text: 'いいえ', style: 'cancel' },
-          {
-            text: '清掃完了',
-            onPress: () => updateTableStatus(table.id, 'available'),
-          },
-        ]
-      );
     }
   };
 
@@ -243,25 +228,6 @@ export default function TablesScreen() {
             text: 'テーブル削除',
             style: 'destructive',
             onPress: () => deleteTable(table.id),
-          },
-        ]
-      );
-    } else if (table.status === 'cleaning') {
-      Alert.alert(
-        `テーブル ${table.number}`,
-        '何をしますか？',
-        [
-          { text: 'キャンセル', style: 'cancel' },
-          {
-            text: 'テーブル名変更',
-            onPress: () => {
-              setEditingTable(table);
-              setShowEditModal(true);
-            },
-          },
-          {
-            text: '清掃完了',
-            onPress: () => updateTableStatus(table.id, 'available'),
           },
         ]
       );
@@ -584,7 +550,6 @@ export default function TablesScreen() {
       available: stats.available || 0,
       occupied: stats.occupied || 0,
       reserved: stats.reserved || 0,
-      cleaning: stats.cleaning || 0,
     };
   };
 
@@ -712,11 +677,11 @@ export default function TablesScreen() {
           <Text style={styles.statLabel}>予約済み</Text>
         </TouchableOpacity>
         <TouchableOpacity 
-          style={[styles.statItem, selectedFilter === 'cleaning' && styles.statItemActive]}
-          onPress={() => setSelectedFilter(selectedFilter === 'cleaning' ? 'all' : 'cleaning')}
+          style={styles.calendarButton}
+          onPress={() => setShowCalendarModal(true)}
         >
-          <Text style={[styles.statNumber, { color: '#6B7280' }]}>{stats.cleaning}</Text>
-          <Text style={styles.statLabel}>清掃中</Text>
+          <Calendar size={20} color="#8B4513" />
+          <Text style={styles.calendarButtonText}>予約</Text>
         </TouchableOpacity>
       </View>
 
@@ -725,7 +690,7 @@ export default function TablesScreen() {
           <Text style={styles.filterText}>
             {selectedFilter === 'available' ? '空席' : 
              selectedFilter === 'occupied' ? '使用中' : 
-             selectedFilter === 'reserved' ? '予約済み' : '清掃中'}のテーブルを表示中
+             '予約済み'}のテーブルを表示中
           </Text>
           <TouchableOpacity
             style={styles.clearFilterButton}
@@ -755,7 +720,6 @@ export default function TablesScreen() {
                 {table.status === 'available' && <CheckCircle size={16} color="#FFFFFF" />}
                 {table.status === 'occupied' && <XCircle size={16} color="#FFFFFF" />}
                 {table.status === 'reserved' && <Clock size={16} color="#FFFFFF" />}
-                {table.status === 'cleaning' && <Users size={16} color="#FFFFFF" />}
               </View>
               
               <Text style={styles.tableNumber}>{table.number}</Text>
@@ -922,6 +886,17 @@ export default function TablesScreen() {
                 style={styles.hamburgerItem}
                 onPress={() => {
                   setShowHamburgerMenu(false);
+                  router.push('/calendar');
+                }}
+              >
+                <Calendar size={24} color="#8B4513" />
+                <Text style={styles.hamburgerItemText}>予約カレンダー</Text>
+              </TouchableOpacity>
+              
+              <TouchableOpacity
+                style={styles.hamburgerItem}
+                onPress={() => {
+                  setShowHamburgerMenu(false);
                   router.push('/analytics');
                 }}
               >
@@ -939,6 +914,38 @@ export default function TablesScreen() {
                 <Settings size={24} color="#8B4513" />
                 <Text style={styles.hamburgerItemText}>設定</Text>
               </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      {/* カレンダー予約管理モーダル */}
+      <Modal
+        visible={showCalendarModal}
+        transparent={true}
+        animationType="slide"
+        onRequestClose={() => setShowCalendarModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.calendarModalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>予約カレンダー</Text>
+              <TouchableOpacity
+                style={styles.modalCloseButton}
+                onPress={() => setShowCalendarModal(false)}
+              >
+                <X size={24} color="#8B4513" />
+              </TouchableOpacity>
+            </View>
+            
+            <View style={styles.calendarPlaceholder}>
+              <Calendar size={64} color="#CCCCCC" />
+              <Text style={styles.calendarPlaceholderText}>
+                カレンダー機能は開発中です
+              </Text>
+              <Text style={styles.calendarPlaceholderSubtext}>
+                予約管理機能を準備中...
+              </Text>
             </View>
           </View>
         </View>
@@ -1028,6 +1035,19 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#666666',
     marginTop: 4,
+  },
+  calendarButton: {
+    flex: 1,
+    alignItems: 'center',
+    paddingVertical: 8,
+    borderRadius: 8,
+    backgroundColor: '#F5E6D3',
+  },
+  calendarButtonText: {
+    fontSize: 12,
+    color: '#8B4513',
+    marginTop: 4,
+    fontWeight: '600',
   },
   filterIndicator: {
     backgroundColor: '#FEF3C7',
@@ -1334,5 +1354,38 @@ const styles = StyleSheet.create({
   },
   deleteButtonText: {
     color: '#DC2626',
+  },
+  calendarModalContent: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    padding: 0,
+    width: '95%',
+    maxWidth: 500,
+    maxHeight: '85%',
+  },
+  modalCloseButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#F5E6D3',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  calendarPlaceholder: {
+    padding: 60,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  calendarPlaceholderText: {
+    fontSize: 18,
+    color: '#666666',
+    marginTop: 20,
+    fontWeight: '600',
+  },
+  calendarPlaceholderSubtext: {
+    fontSize: 14,
+    color: '#999999',
+    marginTop: 8,
+    textAlign: 'center',
   },
 });
