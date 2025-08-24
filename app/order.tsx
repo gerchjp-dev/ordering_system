@@ -287,7 +287,10 @@ export default function OrderScreen() {
             テーブル {tableNumber} - 注文
           </Text>
           <ChevronDown size={20} color="#FFFFFF" />
+        </TouchableOpacity>
+        <Text style={styles.connectionStatus}>
           {isConnected ? '🟢 データベース連携' : '🔴 ローカルデータ'} • 利用可能メニュー: {availableMenuItems.length}件 • 提供停止: {unavailableItems.size}件
+        </Text>
         <View style={styles.placeholder} />
       </View>
 
@@ -508,6 +511,11 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: 'bold',
     color: '#FFFFFF',
+  },
+  connectionStatus: {
+    fontSize: 12,
+    color: '#FFFFFF',
+    opacity: 0.8,
   },
   placeholder: {
     width: 40,
