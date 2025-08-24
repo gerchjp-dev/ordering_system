@@ -9,7 +9,7 @@ import {
   Modal,
   TextInput,
 } from 'react-native';
-import { Plus, Users, Clock, CircleCheck as CheckCircle, Circle as XCircle, CreditCard as Edit, Trash2, Menu, UtensilsCrossed, ClipboardList, TrendingUp, X, Settings, Calendar, AlertTriangle } from 'lucide-react-native';
+import { Plus, Users, Clock, CircleCheck as CheckCircle, Circle as XCircle, CreditCard as Edit, Trash2, Menu, UtensilsCrossed, ClipboardList, TrendingUp, X, Settings, Calendar, TriangleAlert as AlertTriangle } from 'lucide-react-native';
 import { Calendar } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import { useDatabase } from '@/hooks/useDatabase';
@@ -63,9 +63,6 @@ export default function TablesScreen() {
   const [showEditModal, setShowEditModal] = useState(false);
   const [orderHistory, setOrderHistory] = useState<any[]>([]);
   const [showHamburgerMenu, setShowHamburgerMenu] = useState(false);
-  
-  // 予約システムの開発状況を管理
-  const [reservationSystemStatus, setReservationSystemStatus] = useState<'available' | 'development' | 'unavailable'>('development');
   const router = useRouter();
 
   // データベース接続状態の確認
@@ -525,66 +522,6 @@ export default function TablesScreen() {
 
   const stats = getStatusStats();
 
-  // 予約システムのクリック処理
-  const handleReservationClick = () => {
-    switch (reservationSystemStatus) {
-      case 'available':
-        // 予約システムが利用可能な場合
-        router.push('/calendar');
-        break;
-      case 'development':
-        Alert.alert(
-          '開発中',
-          '予約システムは現在開発中です。\n\n今後のアップデートで利用可能になります。',
-          [{ text: 'OK' }]
-        );
-        break;
-      case 'unavailable':
-        Alert.alert(
-          '利用不可',
-          '予約システムは現在利用できません。\n\n管理者にお問い合わせください。',
-          [{ text: 'OK' }]
-        );
-        break;
-    }
-  };
-
-  // 予約システムの表示色を取得
-  const getReservationButtonColor = () => {
-    switch (reservationSystemStatus) {
-      case 'available':
-        return '#8B4513'; // 茶色 - 利用可能
-      case 'development':
-        return '#F59E0B'; // オレンジ - 開発中
-      case 'unavailable':
-        return '#9CA3AF'; // グレー - 利用不可
-    }
-  };
-
-  // 予約システムのステータステキストを取得
-  const getReservationStatusText = () => {
-    switch (reservationSystemStatus) {
-      case 'available':
-        return '予約';
-      case 'development':
-        return '開発中';
-      case 'unavailable':
-        return '利用不可';
-    }
-  };
-
-  // 予約システムのアイコンを取得
-  const getReservationIcon = () => {
-    switch (reservationSystemStatus) {
-      case 'available':
-        return <Calendar size={20} color="#FFFFFF" />;
-      case 'development':
-        return <AlertTriangle size={20} color="#FFFFFF" />;
-      case 'unavailable':
-        return <X size={20} color="#FFFFFF" />;
-    }
-  };
-
   // フィルタリングされたテーブル一覧を取得
   const getFilteredTables = () => {
     if (selectedFilter === 'all') {
@@ -700,16 +637,11 @@ export default function TablesScreen() {
           <Text style={styles.statLabel}>使用中</Text>
         </TouchableOpacity>
         <TouchableOpacity 
-          style={[
-            styles.calendarButton,
-            { backgroundColor: getReservationButtonColor() }
-          ]}
-          onPress={handleReservationClick}
+          style={styles.calendarButton}
+          onPress={() => router.push('/calendar')}
         >
-          <View style={styles.calendarButtonContent}>
-            {getReservationIcon()}
-            <Text style={styles.calendarButtonText}>{getReservationStatusText()}</Text>
-          </View>
+          <Text style={[styles.statNumber, { color: '#8B4513' }]}>📅</Text>
+          <Text style={styles.calendarButtonText}>予約</Text>
         </TouchableOpacity>
       </View>
 
@@ -912,13 +844,10 @@ export default function TablesScreen() {
                 style={styles.hamburgerItem}
                 onPress={() => {
                   setShowHamburgerMenu(false);
-                  handleReservationClick();
+                  router.push('/calendar');
                 }}
               >
-                {React.cloneElement(getReservationIcon() as React.ReactElement, { 
-                  size: 24, 
-                  color: getReservationButtonColor() 
-                })}
+                <Calendar size={24} color="#8B4513" />
                 <Text style={styles.hamburgerItemText}>予約カレンダー</Text>
               </TouchableOpacity>
               
@@ -1038,14 +967,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 8,
     borderRadius: 8,
-  },
-  calendarButtonContent: {
-    alignItems: 'center',
-    justifyContent: 'center',
+    backgroundColor: '#F5E6D3',
   },
   calendarButtonText: {
     fontSize: 12,
-    color: '#FFFFFF',
+    color: '#8B4513',
     marginTop: 4,
     fontWeight: '600',
   },
