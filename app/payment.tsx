@@ -107,7 +107,7 @@ export default function PaymentScreen() {
               console.log('🎉 支払い処理完了');
               Alert.alert(
                 '支払い完了',
-                `🎉 テーブル ${tableNumber}の会計が完了しました！\n\n💰 合計金額: ¥${getTotalAmount().toLocaleString()}\n📝 注文履歴に保存されました\n🔄 テーブルが削除されました\n\n処理モード: ${isConnected ? '🟢 データベース連携' : '🔴 ローカルのみ'}`,
+                `🎉 テーブル ${tableNumber}の会計が完了しました！\n\n💰 合計金額: ¥${getTotalAmount().toLocaleString()}\n📝 注文履歴に保存されました\n🔄 テーブルが空席に戻りました\n\n処理モード: ${isConnected ? '🟢 データベース連携' : '🔴 ローカルのみ'}`,
                 [
                   {
                     text: 'OK',

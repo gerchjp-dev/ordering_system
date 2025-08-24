@@ -294,7 +294,7 @@ export default function TablesScreen() {
               setOrderHistory(prev => [...prev, orderHistoryItem]);
               console.log('✅ ローカル履歴保存完了');
               
-              // ローカルテーブル状態を更新
+              // ローカルテーブル状態を更新（空席に戻す）
               console.log('🗑️ ローカルテーブル状態更新中...');
               setTables(prevTables => {
                 const updatedTables = prevTables.map(t => 
@@ -302,7 +302,7 @@ export default function TablesScreen() {
                     ? { ...t, status: 'available' as const, orders: [], totalAmount: 0, orderStartTime: undefined, customerCount: undefined }
                     : t
                 );
-                console.log('✅ ローカルテーブル削除完了 - 残りテーブル数:', updatedTables.length);
+                console.log('✅ ローカルテーブル状態更新完了 - 空席に戻しました');
                 return updatedTables;
               });
               

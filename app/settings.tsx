@@ -203,7 +203,14 @@ export default function SettingsScreen() {
       return;
     }
     
-    setStoreName(tempStoreName.trim());
+    const newStoreName = tempStoreName.trim();
+    setStoreName(newStoreName);
+    
+    // グローバル状態も更新
+    if ((global as any).setStoreName) {
+      (global as any).setStoreName(newStoreName);
+    }
+    
     setShowStoreInfoModal(false);
     setTempStoreName('');
     Alert.alert('完了', '店舗情報が更新されました');
