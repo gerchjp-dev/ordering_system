@@ -40,6 +40,58 @@ export default function OrderScreen() {
   const { tableId, tableNumber } = useLocalSearchParams();
   const currentTableId = tableId as string;
 
+  // 初期メニューデータ
+  const initialMenuItems: MenuItem[] = [
+    {
+      id: 'teishoku-1',
+      name: '本日の日替わり定食',
+      price: 980,
+      image: 'https://images.pexels.com/photos/1640777/pexels-photo-1640777.jpeg?auto=compress&cs=tinysrgb&w=300',
+      category: '定食',
+      description: '季節の食材を使った栄養バランスの良い定食',
+    },
+    {
+      id: 'teishoku-2',
+      name: '鶏の唐揚げ定食',
+      price: 850,
+      image: 'https://images.pexels.com/photos/2338407/pexels-photo-2338407.jpeg?auto=compress&cs=tinysrgb&w=300',
+      category: '定食',
+      description: 'ジューシーな鶏の唐揚げとご飯、味噌汁、小鉢のセット',
+    },
+    {
+      id: 'teishoku-3',
+      name: '焼き魚定食',
+      price: 920,
+      image: 'https://images.pexels.com/photos/1640777/pexels-photo-1640777.jpeg?auto=compress&cs=tinysrgb&w=300',
+      category: '定食',
+      description: '新鮮な魚の塩焼きとご飯、味噌汁、小鉢のセット',
+    },
+    {
+      id: 'drink-1',
+      name: '緑茶',
+      price: 200,
+      image: 'https://images.pexels.com/photos/1638280/pexels-photo-1638280.jpeg?auto=compress&cs=tinysrgb&w=300',
+      category: 'ドリンク',
+      description: '香り高い緑茶',
+    },
+    {
+      id: 'drink-2',
+      name: 'ほうじ茶',
+      price: 200,
+      image: 'https://images.pexels.com/photos/1638280/pexels-photo-1638280.jpeg?auto=compress&cs=tinysrgb&w=300',
+      category: 'ドリンク',
+      description: '香ばしいほうじ茶',
+    },
+    {
+      id: 'dessert-1',
+      name: 'わらび餅',
+      price: 380,
+      image: 'https://images.pexels.com/photos/1126359/pexels-photo-1126359.jpeg?auto=compress&cs=tinysrgb&w=300',
+      category: 'デザート',
+      description: 'なめらかなわらび餅',
+    },
+  ];
+
   // グローバル状態からメニューを読み込み
   const loadMenuItems = async () => {
     console.log('📱 注文画面: メニュー読み込み開始');
@@ -70,6 +122,14 @@ export default function OrderScreen() {
         const activeMenuItems = globalMenuItems.filter((item: any) => !item.isDeleted);
         setMenuItems(activeMenuItems);
         console.log('🌐 グローバルメニュー読み込み完了:', activeMenuItems.length, '件');
+      } else {
+        // グローバル状態にメニューがない場合は初期メニューを使用
+        console.log('🌐 グローバル状態にメニューなし - 初期メニューを使用');
+        setMenuItems(initialMenuItems);
+        // グローバル状態も初期化
+        if (typeof global !== 'undefined') {
+          (global as any).globalMenuItems = [...initialMenuItems];
+        }
       }
     }
     
@@ -81,7 +141,13 @@ export default function OrderScreen() {
     }
   };
 
-  React.useEffect(() => {
+  useEffect(() => {
+    // 初期メニューを即座に設定
+    if (menuItems.length === 0) {
+      console.log('📱 初期メニューを即座に設定');
+      setMenuItems(initialMenuItems);
+    }
+    
     loadMenuItems();
     
     // 定期的にメニュー状態を更新
@@ -90,7 +156,7 @@ export default function OrderScreen() {
     }, 2000); // 2秒ごとに更新
     
     return () => clearInterval(interval);
-  }, [database]);
+  }, [database, menuItems.length]);
 
   // 利用可能なメニューのみをフィルタリング
   const getAvailableMenuItems = () => {
