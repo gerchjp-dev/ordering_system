@@ -13,6 +13,7 @@ import { Plus, Users, Clock, CircleCheck as CheckCircle, Circle as XCircle, Cred
 import { useRouter } from 'expo-router';
 import { useDatabase } from '@/hooks/useDatabase';
 import { Table as DBTable } from '@/lib/database';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 interface Table {
   id: string;
@@ -67,19 +68,45 @@ export default function TablesScreen() {
 
   // 店舗名をグローバル状態から読み込み
   React.useEffect(() => {
-    const loadStoreName = () => {
-      if ((global as any).getStoreName) {
-        const globalStoreName = (global as any).getStoreName();
-        if (globalStoreName) {
-          setStoreName(globalStoreName);
+    const loadStoreName = async () => {
+      try {
+        // AsyncStorageから店舗名を読み込み
+        const savedStoreName = await AsyncStorage.getItem('store_name');
+        if (savedStoreName) {
+          setStoreName(savedStoreName);
+          // グローバル状態も更新
+          if ((global as any).setStoreName) {
+            (global as any).setStoreName(savedStoreName);
+          }
+        } else {
+          // 初期値を設定
+          const defaultName = '茶茶日和';
+          setStoreName(defaultName);
+          await AsyncStorage.setItem('store_name', defaultName);
+          if ((global as any).setStoreName) {
+            (global as any).setStoreName(defaultName);
+          }
         }
+      } catch (error) {
+        console.error('店舗名読み込みエラー:', error);
+        // エラー時は初期値を設定
+        const defaultName = '茶茶日和';
+        setStoreName(defaultName);
       }
     };
 
     loadStoreName();
+
+    // グローバル状態の変更を監視
+    const interval = setInterval(() => {
+      if ((global as any).getStoreName) {
+        const globalStoreName = (global as any).getStoreName();
+        if (globalStoreName && globalStoreName !== storeName) {
+          setStoreName(globalStoreName);
+        }
+      }
+    }, 1000);
     
-    // 定期的に店舗名をチェック
-    const interval = setInterval(loadStoreName, 1000);
     return () => clearInterval(interval);
   }, []);
 
@@ -597,6 +624,12 @@ export default function TablesScreen() {
     (global as any).getOrderHistory = () => orderHistory;
     
     (global as any).getAllTables = () => tables;
+    
+    // 店舗名管理関数
+    (global as any).getStoreName = () => storeName;
+    (global as any).setStoreName = (newName: string) => {
+      setStoreName(newName);
+    };
     
     (global as any).deleteOrderHistory = (orderId: string) => {
       setOrderHistory(prev => prev.filter(order => order.id !== orderId));

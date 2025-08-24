@@ -14,6 +14,7 @@ import { User, Bell, Shield, CircleHelp as HelpCircle, LogOut, Store, Printer, W
 import { initializeSupabase, clearSupabaseConfig, loadSupabaseConfig, isSupabaseConfigured } from '@/lib/supabase';
 import { useDatabase } from '@/hooks/useDatabase';
 import { useRouter } from 'expo-router';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 interface MenuItem {
   id: string;
@@ -95,7 +96,7 @@ export default function SettingsScreen() {
   const [isMigrating, setIsMigrating] = useState(false);
   
   // 店舗情報設定
-  const [storeName, setStoreName] = useState('茶茶日和');
+  const [storeName, setStoreName] = useState('');
   const [showStoreInfoModal, setShowStoreInfoModal] = useState(false);
   const [tempStoreName, setTempStoreName] = useState('');
   
@@ -112,7 +113,37 @@ export default function SettingsScreen() {
   // Supabase設定状態をチェック
   React.useEffect(() => {
     checkSupabaseConfig();
+    loadStoreName();
   }, []);
+
+  const loadStoreName = async () => {
+    try {
+      const savedStoreName = await AsyncStorage.getItem('store_name');
+      if (savedStoreName) {
+        setStoreName(savedStoreName);
+        // グローバル状態も更新
+        if ((global as any).setStoreName) {
+          (global as any).setStoreName(savedStoreName);
+        }
+      } else {
+        // 初期値を設定
+        const defaultName = '茶茶日和';
+        setStoreName(defaultName);
+        await AsyncStorage.setItem('store_name', defaultName);
+        if ((global as any).setStoreName) {
+          (global as any).setStoreName(defaultName);
+        }
+      }
+    } catch (error) {
+      console.error('店舗名読み込みエラー:', error);
+      // エラー時は初期値を設定
+      const defaultName = '茶茶日和';
+      setStoreName(defaultName);
+      if ((global as any).setStoreName) {
+        (global as any).setStoreName(defaultName);
+      }
+    }
+  };
 
   const checkSupabaseConfig = async () => {
     const configured = await isSupabaseConfigured();
@@ -197,23 +228,33 @@ export default function SettingsScreen() {
     );
   };
 
-  const handleStoreInfoSave = () => {
+  const handleStoreInfoSave = async () => {
     if (!tempStoreName.trim()) {
       Alert.alert('エラー', '店舗名を入力してください');
       return;
     }
     
-    const newStoreName = tempStoreName.trim();
-    setStoreName(newStoreName);
-    
-    // グローバル状態も更新
-    if ((global as any).setStoreName) {
-      (global as any).setStoreName(newStoreName);
+    try {
+      const newStoreName = tempStoreName.trim();
+      
+      // AsyncStorageに保存
+      await AsyncStorage.setItem('store_name', newStoreName);
+      
+      // ローカル状態を更新
+      setStoreName(newStoreName);
+      
+      // グローバル状態も更新
+      if ((global as any).setStoreName) {
+        (global as any).setStoreName(newStoreName);
+      }
+      
+      setShowStoreInfoModal(false);
+      setTempStoreName('');
+      Alert.alert('完了', '店舗情報が更新されました');
+    } catch (error) {
+      console.error('店舗名保存エラー:', error);
+      Alert.alert('エラー', '店舗名の保存に失敗しました');
     }
-    
-    setShowStoreInfoModal(false);
-    setTempStoreName('');
-    Alert.alert('完了', '店舗情報が更新されました');
   };
 
   const handlePaymentMethodToggle = (method: 'cash' | 'card' | 'paypay') => {
