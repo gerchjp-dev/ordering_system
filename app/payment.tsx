@@ -87,6 +87,7 @@ export default function PaymentScreen() {
                 })),
                 total: getTotalAmount(),
                 timestamp: new Date(),
+              };
             // 注文履歴をグローバルに追加（重要：支払い完了後のデータ連動）
             console.log('📝 注文履歴をグローバルに追加中...', orderHistoryItem);
               
@@ -126,6 +127,9 @@ export default function PaymentScreen() {
               // 注文履歴をグローバルに追加
               if ((global as any).addOrderHistory) {
                 (global as any).addOrderHistory(orderHistoryItem);
+                console.log('✅ グローバル注文履歴追加完了');
+              } else {
+                console.log('⚠️ addOrderHistory関数が見つかりません');
               }
               
               console.log('🎉 支払い処理完了');
@@ -147,9 +151,6 @@ export default function PaymentScreen() {
                 'エラー', 
                 `❌ 支払い処理中にエラーが発生しました:\n\n${error instanceof Error ? error.message : '不明なエラー'}`
               );
-              console.log('✅ グローバル注文履歴追加完了');
-            } else {
-              console.log('⚠️ addOrderHistory関数が見つかりません');
             }
           },
         },
